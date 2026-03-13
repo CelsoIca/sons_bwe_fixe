@@ -1,8 +1,8 @@
-#Sons Bwé Fixe - Teu Hub de Música em Angola
+#  Sons Bwé Fixe - Teu Hub de Música em Angola
 
 O **Sons Bwé Fixe** é uma central de entretenimento web completa e imersiva. Mais do que um simples player de áudio, o projeto une o design moderno *Glassmorphism* com funcionalidades avançadas para oferecer uma experiência premium de streaming e interação.
 
-#Funcionalidades Premium
+#  Funcionalidades Premium
 
 - **Player de Áudio com Efeito Vinil:** As capas das músicas transformam-se em discos giratórios em 360° durante a reprodução, com animação fluida e estado de "pausa" realista.
 - **Identidade "Bwé Fixe":** Design personalizado com foco na experiência do usuário, incluindo um logotipo moderno e cabeçalho estilizado.
@@ -13,7 +13,7 @@ O **Sons Bwé Fixe** é uma central de entretenimento web completa e imersiva. M
 - **Aba de Contactos & Apoio:** Formulário de contacto completo para parcerias e sistema de doação via PIX/Café com feedback de "Copiado" automático.
 - **Atalhos de Teclado:** Controle total via teclado (`Espaço` para Play/Pause, `Setas` para saltar faixas).
 
-#Tecnologias Utilizadas
+#  Tecnologias Utilizadas
 
 - **HTML5 (Audio API):** Gestão robusta da engine de som.
 - **Tailwind CSS:** Design responsivo e estilização utilitária de alta velocidade.
@@ -21,7 +21,7 @@ O **Sons Bwé Fixe** é uma central de entretenimento web completa e imersiva. M
 - **FontAwesome:** Iconografia completa para interface de usuário.
 - **Google Fonts:** Tipografia focada em legibilidade e estilo moderno.
 
-#Estrutura do Projeto
+#  Estrutura do Projeto
 
 ```text
 📂 sons-bwe-fixe/
