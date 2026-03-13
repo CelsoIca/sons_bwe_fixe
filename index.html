@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoPlayer - Music Streamer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <audio id="main-audio" src=""></audio>
+
+    <div class="glass w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
+        
+        <div class="flex justify-between items-center mb-8">
+            <span class="text-xs font-bold uppercase tracking-widest text-blue-400">Tocando Agora</span>
+            <div class="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full">
+                <i id="view-icon" class="fa-solid fa-chart-line text-purple-400 text-[10px] transition-transform duration-300"></i>
+                <span id="view-counter" class="text-[10px] font-mono">12.420 views</span>
+            </div>
+        </div>
+
+        <div class="relative group mb-8">
+            <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur opacity-20 transition duration-1000"></div>
+            
+            <div id="visualizer" class="absolute inset-0 flex items-center justify-center gap-1 opacity-0 transition-opacity duration-500 z-10 pointer-events-none">
+                <div class="bar w-1.5 bg-white/90 rounded-full h-4"></div>
+                <div class="bar w-1.5 bg-white/90 rounded-full h-8"></div>
+                <div class="bar w-1.5 bg-white/90 rounded-full h-12"></div>
+                <div class="bar w-1.5 bg-white/90 rounded-full h-8"></div>
+                <div class="bar w-1.5 bg-white/90 rounded-full h-4"></div>
+            </div>
+
+            <img id="main-cover" src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=800" 
+                 class="relative rounded-3xl w-full aspect-square object-cover shadow-inner transition-opacity duration-300">
+        </div>
+
+        <div class="text-center mb-8">
+            <h2 id="main-title" class="text-2xl font-bold tracking-tight transition-opacity duration-300">Midnight City</h2>
+            <p id="main-artist" class="text-gray-400 text-sm">M83 • Synthwave</p>
+        </div>
+
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <div class="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="progress-gradient h-full w-0 transition-all duration-100"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-500 font-mono">
+                    <span id="time-current">00:00</span>
+                    <span id="time-total">00:00</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-4">
+                <button class="text-gray-400 hover:text-white"><i class="fa-solid fa-shuffle"></i></button>
+                <button class="text-2xl hover:scale-110"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="play-btn" class="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center text-2xl hover:scale-105 transition shadow-lg">
+                    <i class="fa-solid fa-play ml-1"></i>
+                </button>
+                <button class="text-2xl hover:scale-110"><i class="fa-solid fa-forward-step"></i></button>
+                <button class="text-gray-400 hover:text-white"><i class="fa-solid fa-repeat"></i></button>
+            </div>
+
+            <hr class="border-white/10">
+
+            <div class="flex justify-around items-center pt-2">
+                <button id="download-btn" class="flex flex-col items-center gap-1 group">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 group-hover:bg-blue-500/20 transition">
+                        <i class="fa-solid fa-download text-sm text-gray-300 group-hover:text-blue-400"></i>
+                    </div>
+                    <span class="text-[10px] text-gray-500 group-hover:text-gray-300 font-bold uppercase">Download</span>
+                </button>
+                <button id="share-btn" class="flex flex-col items-center gap-1 group">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-white/5 group-hover:bg-purple-500/20 transition">
+                        <i class="fa-solid fa-share-nodes text-sm text-gray-300 group-hover:text-purple-400"></i>
+                    </div>
+                    <span class="text-[10px] text-gray-500 group-hover:text-gray-300 font-bold uppercase">Share</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass w-full max-w-md mt-6 rounded-[2rem] p-6 shadow-xl mb-10">
+        <h3 class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-4 px-2">Próximas Faixas</h3>
+        <div id="playlist" class="space-y-1 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+            <div class="track-item flex items-center justify-between p-3 rounded-2xl hover:bg-white/10 transition cursor-pointer" 
+                 data-src="https://www.bensound.com/bensound-music/bensound-creativeminds.mp3">
+                <div class="flex items-center gap-4 pointer-events-none">
+                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100" class="w-12 h-12 rounded-lg object-cover">
+                    <div>
+                        <h4 class="text-sm font-semibold">Creative Minds</h4>
+                        <p class="text-xs text-gray-500">Bensound</p>
+                    </div>
+                </div>
+                <span class="text-[10px] font-mono text-gray-600">03:50</span>
+            </div>
+            </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
