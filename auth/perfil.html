@@ -1,0 +1,30 @@
+<body class="bg-[#020617] text-white p-6">
+    <div class="max-w-md mx-auto space-y-8">
+        <header class="flex flex-col items-center glass p-8 rounded-[3rem] border border-white/10">
+            <div class="relative mb-4">
+                <div id="profile-container" class="w-24 h-24 rounded-full border-4 border-blue-500 overflow-hidden bg-white/5 flex items-center justify-center">
+                    <img id="user-photo" src="" class="w-full h-full object-cover hidden">
+                    <span id="user-initial" class="text-3xl font-black">?</span>
+                </div>
+                <label for="photo-upload" class="absolute bottom-0 right-0 bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-camera text-[10px]"></i>
+                    <input type="file" id="photo-upload" class="hidden" accept="image/*">
+                </label>
+            </div>
+            <h2 id="user-name" class="text-2xl font-black">Utilizador</h2>
+            <span id="fan-badge" class="bg-blue-600/20 text-blue-400 text-[9px] px-3 py-1 rounded-full font-bold uppercase mt-2 tracking-widest">Nível 1: Ouvinte</span>
+            
+            <div class="w-full mt-6 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div id="fan-progress" class="h-full bg-blue-500" style="width: 0%"></div>
+            </div>
+        </header>
+
+        <div class="glass p-6 rounded-[2.5rem] border border-white/10">
+            <h3 class="text-xs font-bold uppercase mb-4 text-gray-500">Músicas que mais ouves</h3>
+            <div id="top-tracks" class="space-y-3"></div>
+        </div>
+
+        <button onclick="auth.signOut().then(() => location.href='login.html')" class="w-full text-red-500 text-xs font-bold uppercase py-4 border border-red-500/20 rounded-2xl">Terminar Sessão</button>
+    </div>
+
+    </body>
