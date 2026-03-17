@@ -1,0 +1,60 @@
+<body class="bg-[#020617] text-white p-6">
+    <div class="max-w-md mx-auto text-center pt-10 animate-fade-in">
+        <header class="mb-12">
+            <h1 class="text-4xl font-black italic tracking-tighter mb-2">NOSSOS <span class="text-[#EF3C54]">NÚMEROS</span></h1>
+            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.4em]">Sons Bwé Fixe Community</p>
+        </header>
+        
+        <div class="grid grid-cols-2 gap-4 mb-10">
+            <div class="glass p-8 rounded-[2.5rem] border border-white/5">
+                <h3 class="text-3xl font-black text-[#EF3C54] mb-1">1.2k</h3>
+                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">PLAYS</p>
+            </div>
+            <div class="glass p-8 rounded-[2.5rem] border border-white/5">
+                <h3 class="text-3xl font-black text-[#2E5EBE] mb-1">45+</h3>
+                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">ARTISTAS</p>
+            </div>
+        </div>
+
+        <form id="contact-form" class="glass p-10 rounded-[3.5rem] text-left space-y-5 border border-white/10 relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-[#2E5EBE]/5 blur-[60px] rounded-full"></div>
+            
+            <h2 class="font-black text-sm uppercase tracking-widest text-white flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane text-[#2E5EBE]"></i> Enviar Proposta
+            </h2>
+            
+            <input type="text" id="msg-nome" placeholder="Teu Nome" required class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm">
+            <input type="email" id="msg-email" placeholder="Teu Email" required class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm">
+            <textarea id="msg-texto" placeholder="Como podemos ajudar?" required class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl h-32 outline-none focus:border-[#2E5EBE] transition text-sm resize-none"></textarea>
+            
+            <button type="submit" id="btn-enviar" class="w-full bg-[#2E5EBE] py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition">
+                ENVIAR AGORA
+            </button>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="../script.js"></script>
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-enviar');
+            btn.innerText = "A ENVIAR...";
+            btn.disabled = true;
+
+            try {
+                await db.collection("contactos").add({
+                    nome: document.getElementById('msg-nome').value,
+                    email: document.getElementById('msg-email').value,
+                    mensagem: document.getElementById('msg-texto').value,
+                    data: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Mensagem enviada com sucesso!");
+                e.target.reset();
+            } catch (err) { alert("Erro ao enviar."); }
+            btn.innerText = "ENVIAR AGORA";
+            btn.disabled = false;
+        });
+    </script>
+</body>
