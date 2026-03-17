@@ -213,6 +213,44 @@
 
         async function apagarParceria(id) {
             if(confirm("Apagar esta proposta?")) await db.collection("contactos").doc(id).delete();
+
+            async function publicarMusicaAdmin() {
+    const btn = document.getElementById('btn-publicar');
+    const fileCapa = document.getElementById('adm-ficheiro-capa').files[0];
+    
+    const titulo = document.getElementById('adm-titulo').value;
+    const artista = document.getElementById('adm-artista').value;
+    const urlMp3 = document.getElementById('adm-url').value;
+    const tipo = document.getElementById('adm-tipo').value; // PEGA A CATEGORIA
+
+    if(!titulo || !artista || !urlMp3) return alert("Preenche todos os campos!");
+
+    btn.innerText = "A PROCESSAR...";
+    btn.disabled = true;
+
+    let linkFinalCapa = "";
+    if(fileCapa) {
+        linkFinalCapa = await uploadParaImgBB(fileCapa); 
+    }
+
+    try {
+        await db.collection("playlist").add({
+            titulo: titulo,
+            artista: artista,
+            url: urlMp3,
+            capa: linkFinalCapa,
+            tipo: tipo, // SALVA A CATEGORIA NO BANCO
+            ordem: Date.now(),
+            data: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("Sons Bwé Fixe! " + tipo + " publicado com sucesso.");
+        window.location.reload();
+    } catch (e) {
+        alert("Erro ao publicar.");
+        btn.disabled = false;
+        btn.innerText = "PUBLICAR NO PLAYER";
+    }
+}
         }
     </script>
 </body>
