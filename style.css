@@ -1,51 +1,100 @@
+/* ==========================================
+   1. VARIÁVEIS E DEFINIÇÕES GLOBAIS
+   ========================================== */
 :root {
-    --color-pink: #EF3C54;   --color-cream: #FBD8AB;
-    --color-blue: #2E5EBE;   --color-orange: #FF553A;
-    --bg-dark: #020617;      --glass: rgba(255, 255, 255, 0.05);
+    --color-pink: #EF3C54;
+    --color-cream: #FBD8AB;
+    --color-blue: #2E5EBE;
+    --color-orange: #FF553A;
+    --bg-dark: #020617;
+    --glass: rgba(255, 255, 255, 0.05);
 }
 
-/* --- ANIMAÇÃO DO BOTÃO PLAY --- */
-@keyframes pulse-pink-bwé { 
+body { 
+    background: var(--bg-dark); 
+    color: white; 
+    font-family: 'Inter', sans-serif; 
+    overflow-x: hidden; 
+    margin: 0; 
+}
+
+/* Utilitários */
+.hidden { display: none !important; }
+
+.glass { 
+    background: var(--glass); 
+    backdrop-filter: blur(15px); 
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.1); 
+}
+
+/* Scrollbar Personalizada */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-blue); border-radius: 10px; }
+
+/* ==========================================
+   2. ANIMAÇÃO DO BOTÃO PLAY (PULSAR)
+   ========================================== */
+@keyframes pulse-pink-bwe { 
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0.7); } 
-    70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(239, 60, 84, 0); } 
+    70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239, 60, 84, 0); } 
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0); } 
 }
 
+/* Ativado via JavaScript quando a música toca */
 .animate-pulse-pink { 
-    animation: pulse-pink-bwé 1.5s infinite !important; 
+    animation: pulse-pink-bwe 1.5s infinite ease-out !important; 
 }
 
-/* --- ANIMAÇÃO DO MODO FESTA --- */
-@keyframes party-bwé {
-    0% { background: #ff0000; filter: blur(20px); opacity: 0.6; }
-    25% { background: #00ff00; filter: blur(30px); opacity: 0.8; }
-    50% { background: #0000ff; filter: blur(20px); opacity: 0.6; }
-    75% { background: #ffff00; filter: blur(30px); opacity: 0.8; }
-    100% { background: #ff00ff; filter: blur(20px); opacity: 0.6; }
+/* ==========================================
+   3. ANIMAÇÃO DO MODO FESTA (LUZES)
+   ========================================== */
+@keyframes party-mode-colors {
+    0% { background-color: rgba(255, 0, 0, 0.5); filter: blur(20px); }
+    25% { background-color: rgba(0, 255, 0, 0.5); filter: blur(30px); }
+    50% { background-color: rgba(0, 0, 255, 0.5); filter: blur(20px); }
+    75% { background-color: rgba(255, 255, 0, 0.5); filter: blur(30px); }
+    100% { background-color: rgba(255, 0, 255, 0.5); filter: blur(20px); }
 }
 
+/* Ativado via JavaScript quando não há capa */
 .animate-party {
     display: block !important;
-    animation: party-bwé 0.5s infinite alternate !important;
+    animation: party-mode-colors 0.6s infinite alternate ease-in-out !important;
     position: absolute !important;
     inset: 0 !important;
     z-index: 10;
 }
 
-body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; }
+/* ==========================================
+   4. BARRA DE PROGRESSO (INPUT RANGE)
+   ========================================== */
+input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+}
 
-.glass { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; 
+    height: 14px;
+    background: var(--color-pink);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--color-pink);
+    margin-top: -5px; /* Alinhamento central */
+}
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: var(--color-blue); border-radius: 10px; }
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
 
-/* Animações */
-@keyframes pulse-pink { 0% { box-shadow: 0 0 0 0 rgba(239, 60, 84, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 60, 84, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 60, 84, 0); } }
-.animate-pulse-pink { animation: pulse-pink 2s infinite; }
-
-.hidden { display: none !important; }
-
+/* ==========================================
+   5. COMPONENTES (FOOTER E OUTROS)
+   ========================================== */
 footer a {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -54,68 +103,7 @@ footer .glass:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    transform: translateY(-3px);
 }
 
-/* Efeito de Luzes de Festa (Sem Capa) */
-@keyframes partyMode {
-    0% { background-color: rgba(255, 0, 0, 0.4); }
-    33% { background-color: rgba(0, 255, 0, 0.4); }
-    66% { background-color: rgba(0, 0, 255, 0.4); }
-    100% { background-color: rgba(255, 0, 255, 0.4); }
-}
-
-#party-lights {
-    animation: partyMode 0.6s infinite alternate;
-    width: 100%; height: 100%;
-}
-
-/* Esconder a capa quando o Modo Festa está ativo */
-.capa-hidden { opacity: 0; }
-
-/* Animação do Botão Play (Mais suave) */
-@keyframes pulse-pink-subtle { 
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0.5); } 
-    70% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(239, 60, 84, 0); } 
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0); } 
-}
-.animate-pulse-pink { animation: pulse-pink-subtle 2s infinite ease-out; }
-
-/* Customização da Barra de Progresso (Input Range) */
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px; height: 12px;
-    background: #EF3C54;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 10px #EF3C54;
-}
-
-/* --- 1. ANIMAÇÃO DO BOTÃO PLAY (PULSAR) --- */
-@keyframes pulse-pink-subtle { 
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0.6); } 
-    70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(239, 60, 84, 0); } 
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0); } 
-}
-
-/* Esta classe é adicionada pelo JS quando a música toca */
-.animate-pulse-pink { 
-    animation: pulse-pink-subtle 2s infinite ease-out !important; 
-}
-
-
-/* --- 2. ANIMAÇÃO DO MODO FESTA (LUZES) --- */
-@keyframes partyModeColors {
-    0% { background-color: rgba(255, 0, 0, 0.5); filter: blur(10px); }   /* Vermelho */
-    25% { background-color: rgba(0, 255, 0, 0.5); filter: blur(15px); }  /* Verde */
-    50% { background-color: rgba(0, 0, 255, 0.5); filter: blur(10px); }  /* Azul */
-    75% { background-color: rgba(255, 255, 0, 0.5); filter: blur(15px); } /* Amarelo */
-    100% { background-color: rgba(255, 0, 255, 0.5); filter: blur(10px); } /* Rosa */
-}
-
-/* Esta classe é ligada pelo JS se não houver capa */
-.animate-party {
-    animation: partyModeColors 0.8s infinite alternate ease-in-out !important;
-    width: 100%; height: 100%;
-    position: absolute;
-    inset: 0;
-}
+.capa-hidden { opacity: 0; transition: opacity 0.5s; }
