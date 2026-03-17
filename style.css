@@ -1,0 +1,27 @@
+:root {
+    --color-pink: #EF3C54;   --color-cream: #FBD8AB;
+    --color-blue: #2E5EBE;   --color-orange: #FF553A;
+    --bg-dark: #020617;      --glass: rgba(255, 255, 255, 0.05);
+}
+
+body { background: var(--bg-dark); color: white; font-family: sans-serif; overflow-x: hidden; }
+
+.glass { 
+    background: var(--glass); backdrop-filter: blur(15px); 
+    border: 1px solid rgba(255,255,255,0.1); 
+}
+
+#play-btn { 
+    background: var(--color-pink); color: var(--color-cream);
+    box-shadow: 0 0 20px rgba(239, 60, 84, 0.4); 
+}
+
+.text-accent { color: var(--color-blue); }
+.text-peach { color: #FDB38D; }
+
+/* Scrollbar Personalizada */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: var(--color-blue); border-radius: 10px; }
+
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 4s linear infinite; }
