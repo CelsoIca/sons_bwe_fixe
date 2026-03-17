@@ -91,3 +91,104 @@ function renderizarMusica(i) {
 function logout() {
     auth.signOut().then(() => window.location.href = "../index.html");
 }
+
+// --- LÓGICA DO PLAYER GLOBAL ---
+let playlist = [];
+let indexMusica = 0;
+const audio = document.getElementById('main-audio');
+const playBtn = document.getElementById('play-btn');
+const progressBar = document.getElementById('progress-bar');
+const coverContainer = document.getElementById('cover-container');
+const mainCover = document.getElementById('main-cover');
+const partyLights = document.getElementById('party-lights');
+
+if (audio) {
+    // 1. Carregar Playlist do Firestore (Músicas reais)
+    db.collection("playlist").orderBy("ordem", "asc").onSnapshot(snap => {
+        playlist = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (playlist.length > 0 && audio.src === "") renderizarMusica(0); // Carrega a primeira mas não toca
+    });
+
+    // 2. Atualizar Barra de Progresso e Tempo
+    audio.ontimeupdate = () => {
+        if (!isNaN(audio.duration)) {
+            const progresso = (audio.currentTime / audio.duration) * 100;
+            progressBar.value = progresso;
+            
+            // Atualizar tempos (ex: 0:30 / 3:15)
+            document.getElementById('current-time').innerText = formatarTempo(audio.currentTime);
+            document.getElementById('duration-time').innerText = formatarTempo(audio.duration);
+        }
+    };
+
+    // 3. Permitir clicar na barra de progresso
+    progressBar.oninput = () => {
+        const tempoDestino = (progressBar.value / 100) * audio.duration;
+        audio.currentTime = tempoDestino;
+    };
+
+    // 4. Passar para a próxima automaticamente quando acaba
+    audio.onended = () => proximaMusica();
+}
+
+// Auxiliar: Formatar tempo (segundos -> mm:ss)
+function formatarTempo(segundos) {
+    const min = Math.floor(segundos / 60);
+    const seg = Math.floor(segundos % 60);
+    return `${min}:${seg < 10 ? '0' : ''}${seg}`;
+}
+
+// Auxiliar: Mostrar música na tela
+function renderizarMusica(i) {
+    indexMusica = i;
+    const m = playlist[i];
+    if (!m) return;
+
+    document.getElementById('main-title').innerText = m.titulo;
+    document.getElementById('main-artist').innerText = m.artista;
+    audio.src = m.url; // Link do MP3
+
+    // Ativar Modo Festa se não houver capa
+    if (m.capa) {
+        mainCover.src = m.capa;
+        mainCover.classList.remove('hidden');
+        partyLights.classList.add('hidden');
+    } else {
+        // Modo Festa: Esconde a imagem e mostra as luzes piscando
+        mainCover.classList.add('hidden');
+        partyLights.classList.remove('hidden');
+    }
+}
+
+// Controlos de Reprodução
+function togglePlay() {
+    if (!audio.src) return alert("Escolha um som primeiro!");
+
+    if (audio.paused) {
+        audio.play();
+        playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        playBtn.classList.add('animate-pulse-pink');
+    } else {
+        audio.pause();
+        playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        playBtn.classList.remove('animate-pulse-pink');
+    }
+}
+
+function proximaMusica() {
+    if (playlist.length === 0) return;
+    indexMusica = (indexMusica + 1) % playlist.length;
+    renderizarMusica(indexMusica);
+    audio.play();
+    playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    playBtn.classList.add('animate-pulse-pink');
+}
+
+function musicaAnterior() {
+    if (playlist.length === 0) return;
+    indexMusica = (indexMusica - 1 + playlist.length) % playlist.length;
+    renderizarMusica(indexMusica);
+    audio.play();
+    playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    playBtn.classList.add('animate-pulse-pink');
+}
