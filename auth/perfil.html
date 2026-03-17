@@ -1,30 +1,77 @@
-<body class="bg-[#020617] text-white p-6">
-    <div class="max-w-md mx-auto space-y-8">
-        <header class="flex flex-col items-center glass p-8 rounded-[3rem] border border-white/10">
-            <div class="relative mb-4">
-                <div id="profile-container" class="w-24 h-24 rounded-full border-4 border-blue-500 overflow-hidden bg-white/5 flex items-center justify-center">
+<body class="bg-[#020617] text-white p-6 min-h-screen">
+    <div class="max-w-md mx-auto space-y-8 animate-fade-in">
+        <header class="flex flex-col items-center glass p-8 rounded-[3rem] border border-white/10 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-white/5"></div>
+            
+            <div class="relative mb-4 group">
+                <div id="profile-container" class="w-28 h-28 rounded-full border-4 border-[#2E5EBE] overflow-hidden bg-white/5 flex items-center justify-center shadow-2xl">
                     <img id="user-photo" src="" class="w-full h-full object-cover hidden">
-                    <span id="user-initial" class="text-3xl font-black">?</span>
+                    <span id="user-initial" class="text-4xl font-black text-[#2E5EBE]">?</span>
                 </div>
-                <label for="photo-upload" class="absolute bottom-0 right-0 bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer">
-                    <i class="fa-solid fa-camera text-[10px]"></i>
-                    <input type="file" id="photo-upload" class="hidden" accept="image/*">
+                <label for="photo-upload" class="absolute bottom-1 right-1 bg-[#EF3C54] w-9 h-9 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition shadow-lg">
+                    <i class="fa-solid fa-camera text-[12px] text-white"></i>
+                    <input type="file" id="photo-upload" class="hidden" accept="image/*" onchange="uploadFotoPerfil(this)">
                 </label>
             </div>
-            <h2 id="user-name" class="text-2xl font-black">Utilizador</h2>
-            <span id="fan-badge" class="bg-blue-600/20 text-blue-400 text-[9px] px-3 py-1 rounded-full font-bold uppercase mt-2 tracking-widest">Nível 1: Ouvinte</span>
+
+            <h2 id="user-name-display" class="text-2xl font-black italic tracking-tighter">Carregando...</h2>
+            <div class="flex items-center gap-2 mt-2">
+                <span id="fan-badge" class="bg-[#2E5EBE]/20 text-[#2E5EBE] text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em]">Nível 1: Ouvinte</span>
+            </div>
             
-            <div class="w-full mt-6 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div id="fan-progress" class="h-full bg-blue-500" style="width: 0%"></div>
+            <div class="w-full mt-8 px-4">
+                <div class="flex justify-between text-[8px] font-black uppercase mb-2 text-gray-500">
+                    <span>Experiência</span>
+                    <span id="exp-percent">10%</span>
+                </div>
+                <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div id="fan-progress" class="h-full bg-gradient-to-r from-[#2E5EBE] to-[#EF3C54] transition-all duration-1000" style="width: 10%"></div>
+                </div>
             </div>
         </header>
 
-        <div class="glass p-6 rounded-[2.5rem] border border-white/10">
-            <h3 class="text-xs font-bold uppercase mb-4 text-gray-500">Músicas que mais ouves</h3>
-            <div id="top-tracks" class="space-y-3"></div>
+        <div class="glass p-8 rounded-[2.5rem] border border-white/10">
+            <h3 class="text-[10px] font-black uppercase mb-6 text-gray-500 tracking-widest flex items-center gap-2">
+                <i class="fa-solid fa-fire-flame-curved text-orange-500"></i> O que tens ouvido
+            </h3>
+            <div id="top-tracks" class="space-y-4">
+                <p class="text-[10px] text-gray-600 italic">As tuas músicas favoritas aparecerão aqui em breve...</p>
+            </div>
         </div>
 
-        <button onclick="auth.signOut().then(() => location.href='login.html')" class="w-full text-red-500 text-xs font-bold uppercase py-4 border border-red-500/20 rounded-2xl">Terminar Sessão</button>
+        <button onclick="auth.signOut().then(() => location.href='login.html')" class="w-full text-gray-500 text-[10px] font-black uppercase py-5 border border-white/5 rounded-2xl hover:bg-red-500/10 hover:text-red-500 transition-all tracking-widest">
+            <i class="fa-solid fa-power-off mr-2"></i> Terminar Sessão
+        </button>
     </div>
 
-    </body>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="../script.js"></script>
+    <script>
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const doc = await db.collection("users").doc(user.uid).get();
+                const data = doc.data();
+                document.getElementById('user-name-display').innerText = data.nome || "Membro Bwé Fixe";
+                document.getElementById('user-initial').innerText = (data.nome || "U").charAt(0).toUpperCase();
+                if(data.fotoUrl) {
+                    const img = document.getElementById('user-photo');
+                    img.src = data.fotoUrl;
+                    img.classList.remove('hidden');
+                    document.getElementById('user-initial').classList.add('hidden');
+                }
+            } else { location.href = 'login.html'; }
+        });
+
+        async function uploadFotoPerfil(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const link = await uploadParaImgBB(file);
+            if(link) {
+                await db.collection("users").doc(auth.currentUser.uid).update({ fotoUrl: link });
+                location.reload();
+            }
+        }
+    </script>
+</body>
