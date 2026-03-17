@@ -14,17 +14,37 @@
         <i class="fa-solid fa-bars text-white"></i>
     </button>
 
-    <main class="max-w-md mx-auto pt-20 p-6">
-        <div class="glass rounded-[3rem] p-8 text-center border border-white/10">
-            <img id="main-cover" src="" class="w-full aspect-square rounded-3xl mb-6 object-cover">
-            <h2 id="main-title" class="text-2xl font-black text-white">--</h2>
-            <p id="main-artist" class="text-gray-500 mb-6">--</p>
-            <audio id="main-audio"></audio>
-            <button onclick="togglePlay()" id="play-btn" class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-2xl animate-pulse-pink">
+ <main class="max-w-md mx-auto pt-20 p-6 pb-24">
+    <div class="glass rounded-[3rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden">
+        
+        <div id="cover-container" class="w-full aspect-square rounded-3xl mb-6 overflow-hidden relative shadow-inner bg-black/20 transition-all duration-500">
+            <img id="main-cover" src="../assets/default.png" class="w-full h-full object-cover transition-opacity duration-700">
+            <div id="party-lights" class="absolute inset-0 hidden"></div> </div>
+        
+        <div class="mb-6">
+            <h2 id="main-title" class="text-2xl font-black text-white truncate">Escolha um som</h2>
+            <p id="main-artist" class="text-gray-500 uppercase text-xs tracking-widest">Sons Bwé Fixe</p>
+        </div>
+
+        <audio id="main-audio"></audio>
+        
+        <div class="flex items-center gap-2 mb-6">
+            <span id="current-time" class="text-[9px] text-gray-600">0:00</span>
+            <input type="range" id="progress-bar" value="0" min="0" max="100" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
+            <span id="duration-time" class="text-[9px] text-gray-600">0:00</span>
+        </div>
+
+        <div class="flex justify-between items-center px-4">
+            <button onclick="musicaAnterior()" class="text-xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-backward-step"></i></button>
+            
+            <button onclick="togglePlay()" id="play-btn" class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-3xl shadow-lg shadow-pink-500/20 hover:scale-105 active:scale-95 transition">
                 <i class="fa-solid fa-play"></i>
             </button>
+            
+            <button onclick="proximaMusica()" class="text-xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-forward-step"></i></button>
         </div>
-    </main>
+    </div>
+</main>
 
     <div id="side-menu" class="fixed inset-0 z-[300] hidden">
         <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
