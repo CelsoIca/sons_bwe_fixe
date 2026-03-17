@@ -12,6 +12,36 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Substitui pelo teu código real do ImgBB
+const IMGBB_API_KEY = 'b0f9a034a766f6b052c4b537e0b1d2e6'; 
+
+async function uploadParaImgBB(file) {
+    // 1. Criar o formulário de envio
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        // 2. Enviar para o servidor do ImgBB
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log("Upload feito com sucesso: ", data.data.url);
+            return data.data.url; // Este é o link direto da imagem (.jpg ou .png)
+        } else {
+            throw new Error("Erro no ImgBB: " + data.error.message);
+        }
+    } catch (error) {
+        console.error("Erro ao carregar imagem:", error);
+        return null;
+    }
+}
+
+
 // CONTROLO DO MENU
 const sideMenu = document.getElementById('side-menu');
 function toggleMenu() {
