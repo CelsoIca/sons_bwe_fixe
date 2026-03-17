@@ -4,105 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sons Bwé Fixe | Home</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-[#020617]">
+<body class="bg-[#020617] text-white">
 
-    <button id="open-menu" class="fixed top-6 right-6 z-[200] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg">
-        <i class="fa-solid fa-bars text-white"></i>
+    <button id="open-menu" class="fixed top-6 right-6 z-[200] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg hover:scale-110 active:scale-90 transition">
+        <i class="fa-solid fa-bars"></i>
     </button>
 
- <main class="max-w-md mx-auto pt-20 p-6 pb-24">
-     
-    <div class="glass rounded-[3rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden">
+    <main class="max-w-md mx-auto pt-20 p-6">
         
-      <div id="cover-container" class="w-full aspect-square rounded-3xl mb-6 overflow-hidden relative shadow-inner bg-black/20">
-    
-        <img id="main-cover" src="../assets/default.png" class="w-full h-full object-cover transition-opacity duration-500">
-    
-        <div id="party-lights" class="hidden"></div> 
-
-      </div>
-        
-        <div class="mb-6">
-            <h2 id="main-title" class="text-2xl font-black text-white truncate">Escolha um som</h2>
-            <p id="main-artist" class="text-gray-500 uppercase text-xs tracking-widest">Sons Bwé Fixe</p>
-        </div>
-
-        <audio id="main-audio"></audio>
-        
-        <div class="flex items-center gap-2 mb-6">
-            <span id="current-time" class="text-[9px] text-gray-600">0:00</span>
-            <input type="range" id="progress-bar" value="0" min="0" max="100" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
-            <span id="duration-time" class="text-[9px] text-gray-600">0:00</span>
-        </div>
-
-        <div class="flex justify-between items-center px-4">
-            <button onclick="musicaAnterior()" class="text-xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-backward-step"></i></button>
+        <div class="glass rounded-[3rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden">
             
-            <button onclick="togglePlay()" id="play-btn" class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-3xl shadow-lg shadow-pink-500/20 hover:scale-105 active:scale-95 transition">
-                <i class="fa-solid fa-play"></i>
-            </button>
+            <div id="cover-container" class="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden bg-black/20 shadow-inner">
+                <img id="main-cover" src="assets/default.png" class="w-full h-full object-cover transition-opacity duration-500">
+                
+                <div id="party-lights" class="hidden"></div> 
+            </div>
             
-            <button onclick="proximaMusica()" class="text-xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-forward-step"></i></button>
+            <div class="mb-6">
+                <h2 id="main-title" class="text-2xl font-black truncate">Escolha um som</h2>
+                <p id="main-artist" class="text-gray-500 uppercase text-xs tracking-widest mt-1">Sons Bwé Fixe</p>
+            </div>
+
+            <audio id="main-audio"></audio>
+            
+            <div class="flex items-center gap-2 mb-8">
+                <span id="current-time" class="text-[9px] text-gray-500">0:00</span>
+                <input type="range" id="progress-bar" value="0" min="0" max="100" 
+                    class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
+                <span id="duration-time" class="text-[9px] text-gray-500">0:00</span>
+            </div>
+
+            <div class="flex justify-between items-center px-4">
+                <button onclick="musicaAnterior()" class="text-xl text-gray-500 hover:text-white transition">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                
+                <button id="play-btn" onclick="togglePlay()" 
+                    class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-3xl shadow-lg shadow-pink-500/20 hover:scale-105 active:scale-95 transition flex items-center justify-center">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+                
+                <button onclick="proximaMusica()" class="text-xl text-gray-500 hover:text-white transition">
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+            </div>
         </div>
-    </div>
-</main>
+    </main>
 
     <div id="side-menu" class="fixed inset-0 z-[300] hidden">
         <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-        <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col">
+        
+        <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col shadow-2xl">
             <h3 class="font-black text-xl text-[#FBD8AB] mb-10">Navegação</h3>
-            <nav class="flex flex-col gap-6 font-bold text-lg text-white">
-                <a href="index.html"><i class="fa-solid fa-house mr-3"></i>Home</a>
-                <a href="auth/login.html"><i class="fa-solid fa-right-to-bracket mr-3"></i>Login / Cadastro</a>
-                <a href="auth/perfil.html"><i class="fa-solid fa-user mr-3"></i>Perfil</a>
-                <a href="parcerias.html"><i class="fa-solid fa-handshake mr-3"></i>Parcerias</a>
-                <a href="auth/admin.html" class="text-orange-500 border-t border-white/10 pt-4"><i class="fa-solid fa-shield-halved mr-3"></i>Admin</a>
+            <nav class="flex flex-col gap-6 font-bold text-lg">
+                <a href="index.html" class="hover:text-[#EF3C54] transition"><i class="fa-solid fa-house mr-3 text-[#2E5EBE]"></i>Home</a>
+                <a href="auth/login.html" class="hover:text-[#EF3C54] transition"><i class="fa-solid fa-right-to-bracket mr-3 text-[#2E5EBE]"></i>Login</a>
+                <a href="auth/perfil.html" class="hover:text-[#EF3C54] transition"><i class="fa-solid fa-user mr-3 text-[#2E5EBE]"></i>Perfil</a>
+                <a href="parcerias.html" class="hover:text-[#EF3C54] transition"><i class="fa-solid fa-handshake mr-3 text-[#2E5EBE]"></i>Parcerias</a>
+                
+                <a href="auth/admin.html" class="mt-4 pt-4 border-t border-white/10 text-orange-500 hover:text-orange-400">
+                    <i class="fa-solid fa-shield-halved mr-3"></i>Admin
+                </a>
             </nav>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="script.js"></script>
-
     <footer class="mt-20 pb-10 px-6 border-t border-white/5 pt-10">
-    <div class="max-w-md mx-auto">
-        <div class="flex flex-col items-center text-center space-y-6">
-            
+        <div class="max-w-md mx-auto text-center space-y-6">
             <div>
-                <h2 class="text-xl font-black tracking-tighter text-white">Sons Bwé Fixe</h2>
+                <h2 class="text-xl font-black tracking-tighter">Sons Bwé Fixe</h2>
                 <p class="text-[9px] text-gray-500 uppercase tracking-[0.3em]">A Vibe que Angola Gosta</p>
             </div>
 
-            <div class="flex gap-4">
-                <a href="https://youtube.com/@seucanal" target="_blank" class="w-12 h-12 glass rounded-2xl flex items-center justify-center text-red-500 hover:scale-110 transition">
-                    <i class="fa-brands fa-youtube text-xl"></i>
-                </a>
-                <a href="https://instagram.com/seuperfil" target="_blank" class="w-12 h-12 glass rounded-2xl flex items-center justify-center text-pink-500 hover:scale-110 transition">
-                    <i class="fa-brands fa-instagram text-xl"></i>
-                </a>
-                <a href="https://wa.me/244900000000" target="_blank" class="w-12 h-12 glass rounded-2xl flex items-center justify-center text-green-500 hover:scale-110 transition">
-                    <i class="fa-brands fa-whatsapp text-xl"></i>
-                </a>
+            <div class="flex justify-center gap-4">
+                <a href="#" class="w-12 h-12 glass rounded-2xl flex items-center justify-center text-red-500 hover:scale-110 transition"><i class="fa-brands fa-youtube text-xl"></i></a>
+                <a href="#" class="w-12 h-12 glass rounded-2xl flex items-center justify-center text-pink-500 hover:scale-110 transition"><i class="fa-brands fa-instagram text-xl"></i></a>
+                <a href="#" class="w-12 h-12 glass rounded-2xl flex items-center justify-center text-green-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-xl"></i></a>
             </div>
-
-            <nav class="flex gap-6 text-[10px] font-bold uppercase text-gray-400">
-                <a href="index.html" class="hover:text-white">Home</a>
-                <a href="parcerias.html" class="hover:text-white">Parcerias</a>
-                <a href="auth/login.html" class="hover:text-white">Conta</a>
-            </nav>
 
             <p class="text-[8px] text-gray-600 uppercase tracking-widest">
                 &copy; 2024 Sons Bwé Fixe. Todos os direitos reservados.
             </p>
         </div>
-    </div>
-</footer>
-    
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
