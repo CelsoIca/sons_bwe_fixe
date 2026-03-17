@@ -54,4 +54,35 @@ function carregarMensagens() {
             lista.appendChild(card);
         });
     });
+
+    async function salvarMusicaNova() {
+    const btn = document.getElementById('btn-publicar');
+    const inputCapa = document.getElementById('adm-ficheiro-capa');
+    const file = inputCapa.files[0];
+    
+    btn.innerText = "A carregar imagem...";
+    btn.disabled = true;
+
+    let urlFinalCapa = "";
+
+    // Se o usuário selecionou uma foto, faz o upload primeiro
+    if (file) {
+        urlFinalCapa = await uploadParaImgBB(file);
+    }
+
+    // Agora guarda no Firestore com o link que veio do ImgBB
+    try {
+        await db.collection("playlist").add({
+            titulo: document.getElementById('adm-titulo').value,
+            artista: document.getElementById('adm-artista').value,
+            url: document.getElementById('adm-url').value,
+            capa: urlFinalCapa, // Link do ImgBB guardado aqui!
+            ordem: Date.now()
+        });
+        alert("Música publicada com sucesso!");
+        window.location.reload();
+    } catch (e) {
+        alert("Erro ao salvar.");
+    }
+}
 }
