@@ -27,3 +27,37 @@ footer .glass:hover {
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
+
+/* Efeito de Luzes de Festa (Sem Capa) */
+@keyframes partyMode {
+    0% { background-color: rgba(255, 0, 0, 0.4); }
+    33% { background-color: rgba(0, 255, 0, 0.4); }
+    66% { background-color: rgba(0, 0, 255, 0.4); }
+    100% { background-color: rgba(255, 0, 255, 0.4); }
+}
+
+#party-lights {
+    animation: partyMode 0.6s infinite alternate;
+    width: 100%; height: 100%;
+}
+
+/* Esconder a capa quando o Modo Festa está ativo */
+.capa-hidden { opacity: 0; }
+
+/* Animação do Botão Play (Mais suave) */
+@keyframes pulse-pink-subtle { 
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0.5); } 
+    70% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(239, 60, 84, 0); } 
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0); } 
+}
+.animate-pulse-pink { animation: pulse-pink-subtle 2s infinite ease-out; }
+
+/* Customização da Barra de Progresso (Input Range) */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    background: #EF3C54;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px #EF3C54;
+}
