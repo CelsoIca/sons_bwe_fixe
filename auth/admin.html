@@ -2,48 +2,193 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do General | Sons Bwé Fixe</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body class="bg-[#020617] p-6 text-white">
-    <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-black mb-8">Novo Som</h1>
-        <div class="glass p-8 rounded-[3rem] space-y-4">
-            <input type="text" id="adm-titulo" placeholder="Título" class="w-full bg-white/5 p-4 rounded-2xl outline-none">
-            <input type="text" id="adm-artista" placeholder="Artista" class="w-full bg-white/5 p-4 rounded-2xl outline-none">
-            <input type="text" id="adm-url" placeholder="URL do MP3" class="w-full bg-white/5 p-4 rounded-2xl outline-none">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css"> </head>
+<body class="bg-[#020617] text-white p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="flex justify-between items-center mb-10 border-b border-white/5 pb-6">
+            <div>
+                <h1 class="text-3xl font-black border-l-4 border-[#EF3C54] pl-4">PAINEL DO GENERAL</h1>
+                <p class="text-gray-500 text-xs mt-1 uppercase tracking-widest">Controlo Total da Plataforma</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="../index.html" class="bg-white/5 p-4 rounded-full hover:bg-white/10 transition">
+                    <i class="fa-solid fa-house text-[#2E5EBE]"></i>
+                </a>
+                <button onclick="logout()" class="bg-red-500/10 p-4 rounded-full hover:bg-red-500/20 transition text-red-500">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid md:grid-cols-[300px,1fr] gap-8 items-start">
             
-            <p class="text-[10px] text-gray-500 uppercase">Capa da Música</p>
-            <input type="file" id="adm-ficheiro-capa" class="text-xs">
-            
-            <button onclick="salvarNoFirestore()" id="btn-pub" class="w-full bg-[#2E5EBE] py-4 rounded-2xl font-bold mt-4">PUBLICAR AGORA</button>
+            <aside class="glass p-8 rounded-[2.5rem] border border-white/10 space-y-6 md:sticky md:top-8">
+                <div class="text-center relative">
+                    <div class="w-24 h-24 rounded-full border-4 border-[#2E5EBE] overflow-hidden mx-auto mb-4 bg-white/5">
+                        <img id="adm-perfil-foto" src="../assets/default-user.png" class="w-full h-full object-cover">
+                    </div>
+                    <h2 id="adm-perfil-nome-display" class="text-xl font-black">Carregando...</h2>
+                    <span class="inline-block bg-[#EF3C54]/20 text-[#EF3C54] text-[9px] font-bold px-3 py-1 rounded-full uppercase mt-2">ADMINISTRADOR</span>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">Informações Pessoais</p>
+                    
+                    <input type="text" id="adm-perfil-nome" placeholder="Teu Nome Completo" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
+                    
+                    <input type="email" id="adm-perfil-email" readonly class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-gray-600 cursor-not-allowed">
+                    
+                    <input type="text" id="adm-perfil-endereco" placeholder="Endereço / Província" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
+                    
+                    <input type="text" id="adm-perfil-pais" placeholder="País (ex: Angola)" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
+                    
+                    <p class="text-[10px] text-gray-500 uppercase font-bold mt-4">Vibe Musical</p>
+                    <select id="adm-perfil-estilo" class="w-full bg-black border border-white/10 rounded-xl p-3 text-sm outline-none text-white">
+                        <option>Kizomba</option>
+                        <option>Kuduro</option>
+                        <option>Rap / Hip Hop</option>
+                        <option>Afro House</option>
+                        <option>Gospel</option>
+                    </select>
+
+                    <button onclick="guardarPerfilAdmin()" id="btn-salvar-perfil" class="w-full bg-[#2E5EBE] py-3 rounded-xl font-bold mt-4 hover:scale-[1.02] transition">
+                        SALVAR ALTERAÇÕES
+                    </button>
+                </div>
+            </aside>
+
+            <section class="space-y-8">
+                
+                <div class="glass p-8 rounded-[2.5rem] border border-white/10">
+                    <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-[#EF3C54]"></i> Postar Novo Som
+                    </h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <input type="text" id="adm-titulo" placeholder="Título da Música" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
+                        <input type="text" id="adm-artista" placeholder="Nome do Artista" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
+                    </div>
+                    <input type="text" id="adm-url" placeholder="Link Direto do MP3" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE]/50 transition mt-4">
+                    
+                    <div class="mt-4 border-t border-white/5 pt-4">
+                        <p class="text-[10px] text-gray-500 uppercase mb-2">Capa da Música (Ficheiro)</p>
+                        <input type="file" id="adm-ficheiro-capa" accept="image/*" class="text-xs text-gray-400">
+                    </div>
+                    
+                    <button onclick="publicarMusicaAdmin()" id="btn-publicar" class="w-full bg-[#EF3C54] py-4 rounded-2xl font-black mt-6 shadow-lg shadow-pink-500/20 hover:scale-[1.02] transition">
+                        PUBLICAR NO PLAYER
+                    </button>
+                </div>
+
+                <div class="glass p-8 rounded-[2.5rem] border border-white/10">
+                    <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-handshake text-[#FF553A]"></i> Solicitações de Parceria
+                    </h3>
+                    <div id="adm-lista-parcerias" class="space-y-4">
+                        <p class="text-gray-600 text-xs italic text-center py-10">Carregando propostas...</p>
+                    </div>
+                </div>
+
+            </section>
+
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="../script.js"></script>
 
     <script>
-        async function salvarNoFirestore() {
-            const btn = document.getElementById('btn-pub');
-            const file = document.getElementById('adm-ficheiro-capa').files[0];
-            btn.innerText = "A carregar imagem...";
-            
-            let linkCapa = "";
-            if(file) linkCapa = await uploadParaImgBB(file);
+        // --- LÓGICA ESPECÍFICA DO ADMIN ---
 
-            await db.collection("playlist").add({
-                titulo: document.getElementById('adm-titulo').value,
-                artista: document.getElementById('adm-artista').value,
-                url: document.getElementById('adm-url').value,
-                capa: linkCapa,
-                ordem: Date.now()
-            });
-            alert("Música no ar!");
-            window.location.reload();
+        // 1. CARREGAR DADOS DO PERFIL ADMIN NO INÍCIO
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // Preencher Email automático
+                document.getElementById('adm-perfil-email').value = user.email;
+                
+                // Buscar dados do Firestore
+                const doc = await db.collection("users").doc(user.uid).get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('adm-perfil-nome').value = d.nome || "";
+                    document.getElementById('adm-perfil-nome-display').innerText = d.nome || "General";
+                    document.getElementById('adm-perfil-endereco').value = d.endereco || "";
+                    document.getElementById('adm-perfil-pais').value = d.pais || "";
+                    document.getElementById('adm-perfil-estilo').value = d.estiloPreferido || "Kizomba";
+                    if(d.fotoUrl) document.getElementById('adm-perfil-foto').src = d.fotoUrl;
+                }
+            } else {
+                window.location.href = "login.html"; // Proteção extra
+            }
+        });
+
+        // 2. SALVAR ALTERAÇÕES DO PERFIL ADMIN
+        async function guardarPerfilAdmin() {
+            const btn = document.getElementById('btn-salvar-perfil');
+            btn.innerText = "A guardar...";
+            btn.disabled = true;
+            
+            const user = auth.currentUser;
+            const dados = {
+                nome: document.getElementById('adm-perfil-nome').value,
+                endereco: document.getElementById('adm-perfil-endereco').value,
+                pais: document.getElementById('adm-perfil-pais').value,
+                estiloPreferido: document.getElementById('adm-perfil-estilo').value,
+            };
+
+            try {
+                await db.collection("users").doc(user.uid).update(dados);
+                alert("Perfil do General atualizado com sucesso!");
+                document.getElementById('adm-perfil-nome-display').innerText = dados.nome || "General";
+            } catch (e) {
+                alert("Erro ao salvar.");
+            } finally {
+                btn.innerText = "SALVAR ALTERAÇÕES";
+                btn.disabled = false;
+            }
+        }
+
+        // 3. PUBLICAR MÚSICA (COM IMGBB)
+        async function publicarMusicaAdmin() {
+            const btn = document.getElementById('btn-publicar');
+            const fileCapa = document.getElementById('adm-ficheiro-capa').files[0];
+            
+            const titulo = document.getElementById('adm-titulo').value;
+            const artista = document.getElementById('adm-artista').value;
+            const url = document.getElementById('adm-url').value;
+
+            if(!titulo || !artista || !url) return alert("Preenche Título, Artista e URL MP3!");
+
+            btn.innerText = "A carregar imagem...";
+            btn.disabled = true;
+
+            let linkFinalCapa = "";
+            if(fileCapa) {
+                linkFinalCapa = await uploadParaImgBB(fileCapa); // Função do script.js
+            }
+
+            try {
+                await db.collection("playlist").add({
+                    titulo, artista, url, capa: linkFinalCapa,
+                    ordem: Date.now(),
+                    data: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Sons Bwé Fixe! Música publicada.");
+                window.location.reload(); // Limpa form
+            } catch (e) {
+                alert("Erro ao publicar música.");
+            } finally {
+                btn.innerText = "PUBLICAR NO PLAYER";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
