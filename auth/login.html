@@ -29,6 +29,61 @@
             document.getElementById('name-field').classList.toggle('hidden');
             document.getElementById('auth-btn').innerText = isLogin ? "CADASTRAR" : "ENTRAR";
         };
+
+        // ESCUTAR O CLIQUE NO BOTÃO DE LOGIN/CADASTRO
+const authBtn = document.getElementById('auth-btn');
+
+if (authBtn) {
+    authBtn.onclick = async () => {
+        const email = document.getElementById('user-email').value;
+        const pass = document.getElementById('user-pass').value;
+        const nome = document.getElementById('user-name').value;
+        const isLogin = document.getElementById('auth-title').innerText === "Entrar";
+
+        if (!email || !pass) return alert("Preenche os campos obrigatórios!");
+
+        authBtn.innerText = "A processar...";
+        authBtn.disabled = true;
+
+        try {
+            if (isLogin) {
+                // --- LOGIC: ENTRAR ---
+                await auth.signInWithEmailAndPassword(email, pass);
+                alert("Bem-vindo de volta!");
+                window.location.href = "../index.html";
+            } else {
+                // --- LOGIC: CADASTRAR ---
+                if (!nome) return alert("Diz-nos o teu nome!");
+                
+                const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+                const user = userCredential.user;
+
+                // Salvar dados extras no Firestore
+                await db.collection("users").doc(user.uid).set({
+                    nome: nome,
+                    email: email,
+                    role: 'user', // Por padrão é usuário comum
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
+                    fotoUrl: ""
+                });
+
+                alert("Conta criada com sucesso!");
+                window.location.href = "../index.html";
+            }
+        } catch (error) {
+            console.error(error);
+            // Tradução de erros comuns do Firebase
+            if (error.code === 'auth/email-already-in-use') alert("Este email já está registado!");
+            else if (error.code === 'auth/wrong-password') alert("Palavra-passe incorreta!");
+            else if (error.code === 'auth/user-not-found') alert("Utilizador não encontrado!");
+            else alert("Erro: " + error.message);
+        } finally {
+            authBtn.innerText = isLogin ? "ENTRAR" : "CADASTRAR";
+            authBtn.disabled = false;
+        }
+    };
+}
+        
     </script>
 </body>
 </html>
