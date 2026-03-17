@@ -24,21 +24,14 @@
         <div class="grid md:grid-cols-2 gap-8">
             
             <section class="space-y-6">
-                <div class="glass p-8 rounded-[2.5rem] border border-white/10">
-                    <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2">
-                        <i class="fa-solid fa-plus-circle text-[#EF3C54]"></i> Postar Novo Som
-                    </h3>
-                    
-                    <div class="space-y-4" id="form-musica">
-                        <input type="text" id="adm-titulo" placeholder="Título da Música" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
-                        <input type="text" id="adm-artista" placeholder="Nome do Artista" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
-                        <input type="text" id="adm-url" placeholder="Link Direto do MP3" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE]/50 transition">
-                        <input type="text" id="adm-capa" placeholder="Link da Capa (ImgBB)" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE]/50 transition">
-                        
-                        <button onclick="adicionarMusicaFirestore()" class="w-full bg-[#EF3C54] py-4 rounded-2xl font-black shadow-lg shadow-pink-500/20 hover:scale-[1.02] transition">
-                            PUBLICAR AGORA
-                        </button>
-                    </div>
+                <div class="glass p-6 rounded-3xl border border-white/10">
+                    <h3 class="font-bold mb-4">Postar Som com Capa</h3>
+    
+                    <input type="file" id="adm-ficheiro-capa" accept="image/*" class="text-xs mb-4">
+    
+                    <button onclick="salvarMusicaNova()" id="btn-publicar" class="w-full bg-[#EF3C54] py-3 rounded-xl font-bold">
+                            PUBLICAR NO PLAYER
+                    </button>
                 </div>
 
                 <div class="glass p-6 rounded-[2rem] border border-white/10">
