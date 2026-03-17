@@ -192,3 +192,60 @@ function musicaAnterior() {
     playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
     playBtn.classList.add('animate-pulse-pink');
 }
+
+// --- VARIÁVEIS GLOBAIS (Garante que estão no topo) ---
+const audio = document.getElementById('main-audio');
+const playBtn = document.getElementById('play-btn');
+const mainCover = document.getElementById('main-cover');
+const partyLights = document.getElementById('party-lights');
+
+// ... (Resto do código da playlist) ...
+
+// 1. FUNÇÃO: MOSTRAR MÚSICA (Lógica do Modo Festa Inteligente)
+function renderizarMusica(i) {
+    indexMusica = i;
+    const m = playlist[i];
+    if (!m) return;
+
+    // Atualizar Texto
+    document.getElementById('main-title').innerText = m.titulo;
+    document.getElementById('main-artist').innerText = m.artista;
+    audio.src = m.url; 
+
+    // --- LÓGICA MODO FESTA INTELIGENTE ---
+    if (m.capa && m.capa.trim() !== "") {
+        // HÁ CAPA: Mostra imagem, esconde luzes
+        mainCover.src = m.capa;
+        mainCover.classList.remove('hidden'); // Mostra imagem
+        
+        partyLights.classList.add('hidden'); // Esconde div das luzes
+        partyLights.classList.remove('animate-party'); // Desliga animação CSS
+    } else {
+        // NÃO HÁ CAPA: Esconde imagem, liga modo festa
+        mainCover.classList.add('hidden'); // Esconde imagem
+        
+        partyLights.classList.remove('hidden'); // Mostra div das luzes
+        partyLights.classList.add('animate-party'); // LIGA ANIMAÇÃO CSS
+    }
+}
+
+// 2. FUNÇÃO: PLAY/PAUSE (Lógica da Animação do Botão)
+function togglePlay() {
+    if (!audio.src) return alert("Escolha um som primeiro!");
+
+    if (audio.paused) {
+        audio.play();
+        // Mudar ícone
+        playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        // LIGAR ANIMAÇÃO (Adiciona classe CSS)
+        playBtn.classList.add('animate-pulse-pink');
+    } else {
+        audio.pause();
+        // Mudar ícone
+        playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        // DESLIGAR ANIMAÇÃO (Remove classe CSS)
+        playBtn.classList.remove('animate-pulse-pink');
+    }
+}
+
+
