@@ -164,3 +164,44 @@ function musicaAnterior() {
 function logout() {
     auth.signOut().then(() => window.location.href = "index.html");
 }
+
+// --- CONTROLO DA SIDEBAR ---
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+}
+
+// --- PESQUISA E FILTROS ---
+let playlistFiltrada = [];
+
+function filtrarMusica() {
+    const termo = document.getElementById('search-input').value.toLowerCase();
+    
+    // Filtra por Título ou Artista
+    const resultados = playlist.filter(m => 
+        m.titulo.toLowerCase().includes(termo) || 
+        m.artista.toLowerCase().includes(termo)
+    );
+
+    // Se houver resultados, toca o primeiro ou atualiza a lista visual
+    if(resultados.length > 0) {
+        console.log("Encontrado:", resultados[0].titulo);
+        // Aqui podes disparar uma função para mostrar apenas estes resultados na tua lista visual
+    }
+}
+
+function filtrarCategoria(categoria) {
+    if (categoria === 'all') {
+        console.log("Mostrar tudo");
+        // Lógica para resetar filtros
+    } else {
+        console.log("Filtrar por:", categoria);
+        // Filtra a playlist original pela propriedade 'tipo' (que deves adicionar no Firestore)
+        const porCategoria = playlist.filter(m => m.tipo === categoria);
+        if(porCategoria.length > 0) renderizarMusica(playlist.indexOf(porCategoria[0]));
+    }
+    toggleSidebar(); // Fecha o menu após escolher
+}
