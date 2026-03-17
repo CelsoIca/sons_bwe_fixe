@@ -107,3 +107,18 @@ footer .glass:hover {
 }
 
 .capa-hidden { opacity: 0; transition: opacity 0.5s; }
+
+#sidebar {
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+}
+#sidebar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+/* Efeito de destaque no item ativo do menu */
+.sidebar-link-active {
+    background: rgba(239, 60, 84, 0.1);
+    border-left: 4px solid #EF3C54;
+    color: white !important;
+}
