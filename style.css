@@ -17,3 +17,13 @@ body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-seri
 .animate-pulse-pink { animation: pulse-pink 2s infinite; }
 
 .hidden { display: none !important; }
+
+footer a {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+footer .glass:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
