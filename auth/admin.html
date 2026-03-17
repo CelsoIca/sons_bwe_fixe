@@ -7,13 +7,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../style.css">
+
+    <div class="fixed top-6 right-6 z-[100] flex gap-3">
+    <a href="../index.html" class="glass w-12 h-12 flex items-center justify-center rounded-full border border-white/10 hover:bg-white/10 hover:scale-110 transition-all shadow-xl text-[#2E5EBE]" title="Voltar à Home">
+        <i class="fa-solid fa-house"></i>
+    </a>
+    
+    <button onclick="logout()" class="glass w-12 h-12 flex items-center justify-center rounded-full border border-white/10 hover:bg-red-500/20 hover:scale-110 transition-all shadow-xl text-red-500" title="Terminar Sessão">
+        <i class="fa-solid fa-power-off"></i>
+    </button>
+</div>
+
+<header class="text-center pt-12 pb-6">
+    <h1 class="text-3xl font-black tracking-tighter uppercase">Sons Bwé Fixe</h1>
+    <p class="text-[10px] text-orange-500 font-bold uppercase tracking-[0.4em] mt-2">Painel de Controlo General</p>
+</header>
 </head>
 <body class="bg-[#020617] text-white">
 
     <div id="error-overlay" class="fixed inset-0 z-[500] bg-[#EF3C54] flex flex-col items-center justify-center text-center p-6 hidden">
         <i class="fa-solid fa-triangle-exclamation text-7xl text-white mb-6 animate-bounce"></i>
         <h1 class="text-4xl font-black text-white mb-2">ACESSO RESTRITO</h1>
-        <p class="text-white/80 max-w-xs mb-8">Esta área é exclusiva para o General. Detectamos que não tens permissões de Administrador.</p>
+        <p class="text-white/80 max-w-xs mb-8">Esta área é exclusiva para o Administrador. Detectamos que não tens permissões de Administrador.</p>
         <button onclick="window.location.href='../index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition">
             VOLTAR PARA A HOME
         </button>
