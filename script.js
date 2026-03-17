@@ -41,24 +41,41 @@ async function uploadParaImgBB(file) {
     }
 }
 
+// 3. LOGICA DO MENU LATERAL (Funciona em todas as páginas)
+document.addEventListener('DOMContentLoaded', () => {
+    const sideMenu = document.getElementById('side-menu');
+    const openBtn = document.getElementById('open-menu');
+    const closeBtn = document.getElementById('close-menu');
+    const menuX = document.getElementById('menu-x');
 
-// CONTROLO DO MENU
-const sideMenu = document.getElementById('side-menu');
-function toggleMenu() {
-    sideMenu.classList.toggle('hidden');
-    sideMenu.classList.toggle('flex');
+    if (openBtn) openBtn.onclick = () => sideMenu.classList.remove('hidden');
+    if (closeBtn) closeBtn.onclick = () => sideMenu.classList.add('hidden');
+    if (menuX) menuX.onclick = () => sideMenu.classList.add('hidden');
+});
+
+// 4. FUNÇÃO UPLOAD IMGBB
+async function uploadParaImgBB(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        return data.success ? data.data.url : null;
+    } catch (e) { return null; }
 }
 
-// PLAYER LOGIC
+// 5. PLAYER GLOBAL (Só roda se os elementos existirem na página)
 let playlist = [];
 let indexMusica = 0;
 const audio = document.getElementById('main-audio');
 
-function carregarPlaylist() {
+if (audio) {
     db.collection("playlist").orderBy("ordem", "asc").onSnapshot(snap => {
-        playlist = snap.docs.map(doc => doc.data());
+        playlist = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if (playlist.length > 0) renderizarMusica(0);
-        renderLista();
     });
 }
 
@@ -67,8 +84,10 @@ function renderizarMusica(i) {
     document.getElementById('main-title').innerText = m.titulo;
     document.getElementById('main-artist').innerText = m.artista;
     audio.src = m.url;
-    document.getElementById('main-cover').src = m.capa || 'assets/default.png';
+    document.getElementById('main-cover').src = m.capa || '../assets/default.png';
 }
 
-// Inicialização
-if (document.getElementById('main-audio')) carregarPlaylist();
+// 6. LOGOUT
+function logout() {
+    auth.signOut().then(() => window.location.href = "../index.html");
+}
