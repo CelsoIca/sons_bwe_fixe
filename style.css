@@ -4,6 +4,34 @@
     --bg-dark: #020617;      --glass: rgba(255, 255, 255, 0.05);
 }
 
+/* --- ANIMAÇÃO DO BOTÃO PLAY --- */
+@keyframes pulse-pink-bwé { 
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0.7); } 
+    70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(239, 60, 84, 0); } 
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 60, 84, 0); } 
+}
+
+.animate-pulse-pink { 
+    animation: pulse-pink-bwé 1.5s infinite !important; 
+}
+
+/* --- ANIMAÇÃO DO MODO FESTA --- */
+@keyframes party-bwé {
+    0% { background: #ff0000; filter: blur(20px); opacity: 0.6; }
+    25% { background: #00ff00; filter: blur(30px); opacity: 0.8; }
+    50% { background: #0000ff; filter: blur(20px); opacity: 0.6; }
+    75% { background: #ffff00; filter: blur(30px); opacity: 0.8; }
+    100% { background: #ff00ff; filter: blur(20px); opacity: 0.6; }
+}
+
+.animate-party {
+    display: block !important;
+    animation: party-bwé 0.5s infinite alternate !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 10;
+}
+
 body { background: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; margin: 0; }
 
 .glass { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
