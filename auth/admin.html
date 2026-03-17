@@ -106,6 +106,35 @@
     <script src="../script.js"></script>
 
     <script>
+
+// PROTEÇÃO DE ACESSO: SÓ PARA O GENERAL
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        // Busca os dados do utilizador no Firestore
+        const doc = await db.collection("users").doc(user.uid).get();
+        
+        if (doc.exists) {
+            const userData = doc.data();
+            
+            // Se NÃO for admin, expulsa para a Home
+            if (userData.role !== 'admin') {
+                alert("ACESSO NEGADO: Esta área é exclusiva para o General.");
+                window.location.href = "../index.html";
+            } else {
+                console.log("Bem-vindo, General. Acesso autorizado.");
+                // Aqui podes chamar as tuas funções de carregar dados
+                carregarDadosDoPainel(); 
+            }
+        } else {
+            // Se o documento não existir, expulsa
+            window.location.href = "../index.html";
+        }
+    } else {
+        // Se nem sequer estiver logado, manda para o login
+        window.location.href = "login.html";
+    }
+});
+        
         // --- LÓGICA ESPECÍFICA DO ADMIN ---
 
         // 1. CARREGAR DADOS DO PERFIL ADMIN NO INÍCIO
