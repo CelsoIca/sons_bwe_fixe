@@ -6,110 +6,96 @@
     <title>Painel do General | Sons Bwé Fixe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css"> </head>
-<body class="bg-[#020617] text-white p-4 md:p-8">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="bg-[#020617] text-white">
 
     <div id="error-overlay" class="fixed inset-0 z-[500] bg-[#EF3C54] flex flex-col items-center justify-center text-center p-6 hidden">
-    <i class="fa-solid fa-triangle-exclamation text-7xl text-white mb-6 animate-bounce"></i>
-    <h1 class="text-4xl font-black text-white mb-2">ACESSO RESTRITO</h1>
-    <p class="text-white/80 max-w-xs mb-8">Detectamos que não tens permissões de Administrador. Esta área é exclusiva para a administração do Sons Bwé Fixes.</p>
-    <button onclick="window.location.href='../index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition">
-        VOLTAR PARA A HOME
-    </button>
-</div>
-
-<div id="admin-content" class="hidden">
+        <i class="fa-solid fa-triangle-exclamation text-7xl text-white mb-6 animate-bounce"></i>
+        <h1 class="text-4xl font-black text-white mb-2">ACESSO RESTRITO</h1>
+        <p class="text-white/80 max-w-xs mb-8">Esta área é exclusiva para o General. Detectamos que não tens permissões de Administrador.</p>
+        <button onclick="window.location.href='../index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition">
+            VOLTAR PARA A HOME
+        </button>
     </div>
 
-    <div class="max-w-7xl mx-auto">
+    <div id="admin-content" class="hidden">
         
-        <header class="flex justify-between items-center mb-10 border-b border-white/5 pb-6">
-            <div>
-                <h1 class="text-3xl font-black border-l-4 border-[#EF3C54] pl-4">PAINEL DO GENERAL</h1>
-                <p class="text-gray-500 text-xs mt-1 uppercase tracking-widest">Controlo Total da Plataforma</p>
-            </div>
-            <div class="flex gap-2">
-                <a href="../index.html" class="bg-white/5 p-4 rounded-full hover:bg-white/10 transition">
-                    <i class="fa-solid fa-house text-[#2E5EBE]"></i>
-                </a>
-                <button onclick="logout()" class="bg-red-500/10 p-4 rounded-full hover:bg-red-500/20 transition text-red-500">
-                    <i class="fa-solid fa-power-off"></i>
-                </button>
-            </div>
+        <header class="text-center pt-12 pb-6">
+            <h1 class="text-3xl font-black tracking-tighter uppercase">Sons Bwé Fixe</h1>
+            <p class="text-[10px] text-orange-500 font-bold uppercase tracking-[0.4em] mt-2">Painel de Controlo General</p>
         </header>
 
-        <div class="grid md:grid-cols-[300px,1fr] gap-8 items-start">
-            
-            <aside class="glass p-8 rounded-[2.5rem] border border-white/10 space-y-6 md:sticky md:top-8">
-                <div class="text-center relative">
-                    <div class="w-24 h-24 rounded-full border-4 border-[#2E5EBE] overflow-hidden mx-auto mb-4 bg-white/5">
-                        <img id="adm-perfil-foto" src="../assets/default-user.png" class="w-full h-full object-cover">
-                    </div>
-                    <h2 id="adm-perfil-nome-display" class="text-xl font-black">Carregando...</h2>
-                    <span class="inline-block bg-[#EF3C54]/20 text-[#EF3C54] text-[9px] font-bold px-3 py-1 rounded-full uppercase mt-2">ADMINISTRADOR</span>
-                </div>
-
-                <div class="space-y-3">
-                    <p class="text-[10px] text-gray-500 uppercase font-bold">Informações Pessoais</p>
-                    
-                    <input type="text" id="adm-perfil-nome" placeholder="Teu Nome Completo" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
-                    
-                    <input type="email" id="adm-perfil-email" readonly class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-gray-600 cursor-not-allowed">
-                    
-                    <input type="text" id="adm-perfil-endereco" placeholder="Endereço / Província" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
-                    
-                    <input type="text" id="adm-perfil-pais" placeholder="País (ex: Angola)" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
-                    
-                    <p class="text-[10px] text-gray-500 uppercase font-bold mt-4">Vibe Musical</p>
-                    <select id="adm-perfil-estilo" class="w-full bg-black border border-white/10 rounded-xl p-3 text-sm outline-none text-white">
-                        <option>Kizomba</option>
-                        <option>Kuduro</option>
-                        <option>Rap / Hip Hop</option>
-                        <option>Afro House</option>
-                        <option>Gospel</option>
-                    </select>
-
-                    <button onclick="guardarPerfilAdmin()" id="btn-salvar-perfil" class="w-full bg-[#2E5EBE] py-3 rounded-xl font-bold mt-4 hover:scale-[1.02] transition">
-                        SALVAR ALTERAÇÕES
-                    </button>
-                </div>
-            </aside>
-
-            <section class="space-y-8">
+        <main class="max-w-6xl mx-auto p-4 md:p-8">
+            <div class="grid md:grid-cols-[300px,1fr] gap-8 items-start">
                 
-                <div class="glass p-8 rounded-[2.5rem] border border-white/10">
-                    <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2">
-                        <i class="fa-solid fa-plus-circle text-[#EF3C54]"></i> Postar Novo Som
-                    </h3>
-                    
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <input type="text" id="adm-titulo" placeholder="Título da Música" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
-                        <input type="text" id="adm-artista" placeholder="Nome do Artista" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
-                    </div>
-                    <input type="text" id="adm-url" placeholder="Link Direto do MP3" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE]/50 transition mt-4">
-                    
-                    <div class="mt-4 border-t border-white/5 pt-4">
-                        <p class="text-[10px] text-gray-500 uppercase mb-2">Capa da Música (Ficheiro)</p>
-                        <input type="file" id="adm-ficheiro-capa" accept="image/*" class="text-xs text-gray-400">
+                <aside class="glass p-8 rounded-[2.5rem] border border-white/10 space-y-6 md:sticky md:top-8 text-center">
+                    <div class="relative inline-block">
+                        <div class="w-24 h-24 rounded-full border-4 border-[#2E5EBE] overflow-hidden bg-white/5">
+                            <img id="adm-perfil-foto" src="../assets/default-user.png" class="w-full h-full object-cover">
+                        </div>
+                        <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#EF3C54] text-[8px] font-black px-3 py-1 rounded-full uppercase">GENERAL</span>
                     </div>
                     
-                    <button onclick="publicarMusicaAdmin()" id="btn-publicar" class="w-full bg-[#EF3C54] py-4 rounded-2xl font-black mt-6 shadow-lg shadow-pink-500/20 hover:scale-[1.02] transition">
-                        PUBLICAR NO PLAYER
-                    </button>
-                </div>
+                    <h2 id="adm-perfil-nome-display" class="text-xl font-black mt-4">Carregando...</h2>
 
-                <div class="glass p-8 rounded-[2.5rem] border border-white/10">
-                    <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2">
-                        <i class="fa-solid fa-handshake text-[#FF553A]"></i> Solicitações de Parceria
-                    </h3>
-                    <div id="adm-lista-parcerias" class="space-y-4">
-                        <p class="text-gray-600 text-xs italic text-center py-10">Carregando propostas...</p>
+                    <div class="space-y-3 text-left">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold mt-4">Dados da Conta</p>
+                        <input type="text" id="adm-perfil-nome" placeholder="Nome do General" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-[#2E5EBE]">
+                        <input type="email" id="adm-perfil-email" readonly class="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-sm text-gray-500 cursor-not-allowed">
+                        <input type="text" id="adm-perfil-endereco" placeholder="Província / Cidade" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none">
+                        
+                        <button onclick="guardarPerfilAdmin()" id="btn-salvar-perfil" class="w-full bg-[#2E5EBE] py-4 rounded-xl font-bold mt-4 hover:scale-[1.02] transition shadow-lg shadow-blue-500/20">
+                            SALVAR PERFIL
+                        </button>
                     </div>
-                </div>
 
-            </section>
+                    <button onclick="logout()" class="text-gray-600 text-[10px] font-bold uppercase tracking-widest hover:text-red-500 pt-4">Terminar Sessão</button>
+                </aside>
 
-        </div>
+                <section class="space-y-8">
+                    
+                    <div class="glass p-8 rounded-[2.5rem] border border-white/10">
+                        <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2 uppercase text-sm tracking-wider">
+                            <i class="fa-solid fa-plus-circle text-[#EF3C54]"></i> Lançar Novo Som
+                        </h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <input type="text" id="adm-titulo" placeholder="Título da Música" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
+                            <input type="text" id="adm-artista" placeholder="Nome do Artista" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54]/50 transition">
+                        </div>
+
+                        <div class="mt-4 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl">
+                            <label class="text-[9px] font-bold uppercase text-orange-500 mb-1 block">Link Direto do Áudio (MP3)</label>
+                            <input type="text" id="adm-url" placeholder="Ex: https://cloudinary.com/musica.mp3" class="w-full bg-transparent outline-none text-sm text-white">
+                        </div>
+                        
+                        <div class="mt-4 p-4 border border-dashed border-white/10 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase">Capa da Música (Opcional)</p>
+                                <span id="file-name" class="text-[9px] text-white/40">Nenhum ficheiro selecionado</span>
+                            </div>
+                            <label for="adm-ficheiro-capa" class="bg-white/5 px-4 py-2 rounded-lg text-[10px] font-bold cursor-pointer hover:bg-white/10">ESCOLHER</label>
+                            <input type="file" id="adm-ficheiro-capa" accept="image/*" class="hidden" onchange="document.getElementById('file-name').innerText = this.files[0].name">
+                        </div>
+                        
+                        <button onclick="publicarMusicaAdmin()" id="btn-publicar" class="w-full bg-[#EF3C54] py-5 rounded-2xl font-black mt-6 shadow-lg shadow-pink-500/20 hover:scale-[1.02] transition">
+                            PUBLICAR NO PLAYER
+                        </button>
+                    </div>
+
+                    <div class="glass p-8 rounded-[2.5rem] border border-white/10">
+                        <h3 class="font-bold text-[#FBD8AB] mb-6 flex items-center gap-2 uppercase text-sm tracking-wider">
+                            <i class="fa-solid fa-handshake text-[#FF553A]"></i> Propostas de Parceria
+                        </h3>
+                        <div id="adm-lista-parcerias" class="grid gap-4">
+                            <p class="text-gray-600 text-xs italic text-center py-10">Carregando propostas...</p>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+        </main>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -118,118 +104,107 @@
     <script src="../script.js"></script>
 
     <script>
-
-// PROTEÇÃO DE ACESSO: SÓ PARA O GENERAL
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        // Busca os dados do utilizador no Firestore
-        const doc = await db.collection("users").doc(user.uid).get();
-        
-        if (doc.exists) {
-            const userData = doc.data();
-            
-            // Se NÃO for admin, expulsa para a Home
-            if (userData.role !== 'admin') {
-                alert("ACESSO NEGADO: Esta área é exclusiva para o General.");
-                window.location.href = "../index.html";
-            } else {
-                console.log("Bem-vindo, General. Acesso autorizado.");
-                // Aqui podes chamar as tuas funções de carregar dados
-                carregarDadosDoPainel(); 
-            }
-        } else {
-            // Se o documento não existir, expulsa
-            window.location.href = "../index.html";
-        }
-    } else {
-        // Se nem sequer estiver logado, manda para o login
-        window.location.href = "login.html";
-    }
-});
-        
-        // --- LÓGICA ESPECÍFICA DO ADMIN ---
-
-        // 1. CARREGAR DADOS DO PERFIL ADMIN NO INÍCIO
+        // 1. PROTEÇÃO DE ACESSO E CARREGAMENTO
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // Preencher Email automático
-                document.getElementById('adm-perfil-email').value = user.email;
-                
-                // Buscar dados do Firestore
                 const doc = await db.collection("users").doc(user.uid).get();
-                if (doc.exists) {
-                    const d = doc.data();
-                    document.getElementById('adm-perfil-nome').value = d.nome || "";
-                    document.getElementById('adm-perfil-nome-display').innerText = d.nome || "General";
-                    document.getElementById('adm-perfil-endereco').value = d.endereco || "";
-                    document.getElementById('adm-perfil-pais').value = d.pais || "";
-                    document.getElementById('adm-perfil-estilo').value = d.estiloPreferido || "Kizomba";
-                    if(d.fotoUrl) document.getElementById('adm-perfil-foto').src = d.fotoUrl;
+                if (doc.exists && doc.data().role === 'admin') {
+                    document.getElementById('admin-content').classList.remove('hidden');
+                    preencherPerfilAdmin(user, doc.data());
+                    carregarParcerias();
+                } else {
+                    document.getElementById('error-overlay').classList.remove('hidden');
                 }
             } else {
-                window.location.href = "login.html"; // Proteção extra
+                window.location.href = "login.html";
             }
         });
 
-        // 2. SALVAR ALTERAÇÕES DO PERFIL ADMIN
+        // 2. PREENCHER DADOS DO PERFIL
+        function preencherPerfilAdmin(user, data) {
+            document.getElementById('adm-perfil-email').value = user.email;
+            document.getElementById('adm-perfil-nome').value = data.nome || "";
+            document.getElementById('adm-perfil-nome-display').innerText = data.nome || "General";
+            document.getElementById('adm-perfil-endereco').value = data.endereco || "";
+            if(data.fotoUrl) document.getElementById('adm-perfil-foto').src = data.fotoUrl;
+        }
+
+        // 3. SALVAR PERFIL
         async function guardarPerfilAdmin() {
             const btn = document.getElementById('btn-salvar-perfil');
-            btn.innerText = "A guardar...";
-            btn.disabled = true;
-            
+            btn.innerText = "A GUARDAR...";
             const user = auth.currentUser;
             const dados = {
                 nome: document.getElementById('adm-perfil-nome').value,
                 endereco: document.getElementById('adm-perfil-endereco').value,
-                pais: document.getElementById('adm-perfil-pais').value,
-                estiloPreferido: document.getElementById('adm-perfil-estilo').value,
             };
-
             try {
                 await db.collection("users").doc(user.uid).update(dados);
-                alert("Perfil do General atualizado com sucesso!");
-                document.getElementById('adm-perfil-nome-display').innerText = dados.nome || "General";
-            } catch (e) {
-                alert("Erro ao salvar.");
-            } finally {
-                btn.innerText = "SALVAR ALTERAÇÕES";
-                btn.disabled = false;
-            }
+                alert("Perfil do General atualizado!");
+                location.reload();
+            } catch (e) { alert("Erro ao salvar."); }
         }
 
-        // 3. PUBLICAR MÚSICA (COM IMGBB)
+        // 4. PUBLICAR MÚSICA (USANDO MP3 EXTERNO + IMGBB)
         async function publicarMusicaAdmin() {
             const btn = document.getElementById('btn-publicar');
             const fileCapa = document.getElementById('adm-ficheiro-capa').files[0];
-            
             const titulo = document.getElementById('adm-titulo').value;
             const artista = document.getElementById('adm-artista').value;
-            const url = document.getElementById('adm-url').value;
+            const urlMp3 = document.getElementById('adm-url').value;
 
-            if(!titulo || !artista || !url) return alert("Preenche Título, Artista e URL MP3!");
+            if(!titulo || !artista || !urlMp3) return alert("Preenche todos os campos obrigatórios!");
 
-            btn.innerText = "A carregar imagem...";
+            btn.innerText = "A PROCESSAR...";
             btn.disabled = true;
 
             let linkFinalCapa = "";
             if(fileCapa) {
-                linkFinalCapa = await uploadParaImgBB(fileCapa); // Função do script.js
+                linkFinalCapa = await uploadParaImgBB(fileCapa); 
             }
 
             try {
                 await db.collection("playlist").add({
-                    titulo, artista, url, capa: linkFinalCapa,
+                    titulo, artista, url: urlMp3, capa: linkFinalCapa,
                     ordem: Date.now(),
                     data: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert("Sons Bwé Fixe! Música publicada.");
-                window.location.reload(); // Limpa form
+                alert("Sons Bwé Fixe! Música no ar.");
+                window.location.reload();
             } catch (e) {
-                alert("Erro ao publicar música.");
-            } finally {
-                btn.innerText = "PUBLICAR NO PLAYER";
+                alert("Erro ao publicar.");
                 btn.disabled = false;
             }
+        }
+
+        // 5. LISTAR PARCERIAS
+        function carregarParcerias() {
+            db.collection("contactos").orderBy("data", "desc").onSnapshot(snap => {
+                const list = document.getElementById('adm-lista-parcerias');
+                list.innerHTML = "";
+                if(snap.empty) list.innerHTML = "<p class='text-center text-gray-500 text-xs py-10'>Nenhuma proposta recebida.</p>";
+                
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    list.innerHTML += `
+                        <div class="bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-white/10 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-black text-sm text-[#2E5EBE] uppercase">${p.nome}</h4>
+                                <span class="text-[8px] text-gray-600">${new Date(p.data?.toDate()).toLocaleDateString()}</span>
+                            </div>
+                            <p class="text-xs text-gray-300 leading-relaxed mb-3">"${p.mensagem}"</p>
+                            <div class="flex gap-4">
+                                <a href="mailto:${p.email}" class="text-[9px] font-bold text-orange-500 uppercase hover:underline"><i class="fa-solid fa-envelope mr-1"></i> Responder</a>
+                                <button onclick="apagarParceria('${doc.id}')" class="text-[9px] font-bold text-gray-600 uppercase hover:text-red-500"><i class="fa-solid fa-trash mr-1"></i> Apagar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        async function apagarParceria(id) {
+            if(confirm("Apagar esta proposta?")) await db.collection("contactos").doc(id).delete();
         }
     </script>
 </body>
