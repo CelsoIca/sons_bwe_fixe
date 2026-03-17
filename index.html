@@ -39,6 +39,25 @@
         h1 { font-size: 1.5rem; }
         main { padding-top: 2rem; }
     }
-</style>
+    </style>
+    
+<div id="side-menu" class="fixed inset-0 z-[300] hidden">
+    <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col">
+        <div class="flex justify-between items-center mb-10">
+            <h3 class="font-black text-xl text-[#FBD8AB]">Navegação</h3>
+            <i class="fa-solid fa-xmark cursor-pointer" id="menu-x"></i>
+        </div>
+
+        <nav class="flex flex-col gap-6 font-bold text-lg">
+            <a href="index.html" class="flex items-center gap-4"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="auth/login.html" class="flex items-center gap-4"><i class="fa-solid fa-right-to-bracket"></i> Entrar / Conta</a>
+            <a href="auth/perfil.html" class="flex items-center gap-4"><i class="fa-solid fa-user"></i> Meu Perfil</a>
+            <a href="parcerias.html" class="flex items-center gap-4"><i class="fa-solid fa-handshake"></i> Parcerias</a>
+            <a href="auth/admin.html" class="flex items-center gap-4 text-orange-500 border-t border-white/10 pt-6"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+        </nav>
+    </div>
+</div>
+    
 </body>
 </html>
