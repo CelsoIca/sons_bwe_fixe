@@ -15,25 +15,14 @@
             #main-wrapper { margin-left: 18rem; }
         }
         @media (max-width: 767px) { #main-wrapper { margin-left: 0; } }
-
-        .card-musica { transition: all 0.25s; }
-        .card-musica:hover { transform: translateY(-4px); }
-        .card-musica:hover .play-overlay { opacity: 1; }
-        .play-overlay { opacity: 0; transition: opacity 0.2s; }
-
-        /* Player mini fixo em baixo */
-        #mini-player { transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
-        #mini-player.visible { transform: translateY(0); }
     </style>
 </head>
 <body class="bg-[#020617] text-white">
 
-    <!-- Toggle sidebar mobile -->
     <button id="toggle-sidebar-btn" onclick="toggleSidebar()" class="fixed top-6 left-6 z-[100] glass w-12 h-12 flex items-center justify-center rounded-full border border-white/10 hover:bg-white/10 transition text-[#2E5EBE]">
         <i class="fa-solid fa-bars-staggered"></i>
     </button>
 
-    <!-- SIDEBAR -->
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-[200] w-72 bg-[#020617]/95 backdrop-blur-xl border-r border-white/5 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
         <div class="p-8 h-full flex flex-col">
             <div class="flex items-center justify-between mb-8">
@@ -48,18 +37,33 @@
 
             <div class="relative mb-6">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                <input type="text" id="search-input" oninput="executarPesquisaCat()" placeholder="Pesquisar..."
+                <input type="text" id="search-cat" oninput="pesquisarNaCategoria()" placeholder="Pesquisar nesta categoria..."
                     class="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-xs outline-none focus:border-[#EF3C54] transition">
             </div>
 
             <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
                 <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
-                <!-- Tudo — volta ao index -->
-                <a href="index.html" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                <a href="index.html" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
                     <i class="fa-solid fa-music text-[#2E5EBE]"></i>
                     <span class="text-sm font-bold group-hover:text-white text-gray-400">Tudo</span>
                 </a>
-                <!-- Categorias dinâmicas preenchidas por JS -->
+                <a href="categoria.html?tipo=Album" id="link-Album" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-compact-disc text-orange-500"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Albums</span>
+                </a>
+                <a href="categoria.html?tipo=EP" id="link-EP" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-layer-group text-yellow-500"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">EPs</span>
+                </a>
+                <a href="categoria.html?tipo=Single" id="link-Single" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-bolt text-[#EF3C54]"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Singles</span>
+                </a>
+                <a href="categoria.html?tipo=Mixtape" id="link-Mixtape" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-cassette-tape text-purple-500"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Mixtapes</span>
+                </a>
+                <div id="cats-extras"></div>
             </nav>
 
             <div class="mt-auto pt-6 border-t border-white/5">
@@ -70,46 +74,39 @@
 
     <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-[150] hidden backdrop-blur-sm"></div>
 
-    <!-- Botão menu direito -->
     <button id="open-menu" class="fixed top-6 right-6 z-[100] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg hover:scale-110 transition flex items-center justify-center">
         <i class="fa-solid fa-bars"></i>
     </button>
 
-    <!-- CONTEÚDO -->
     <div id="main-wrapper" class="transition-all duration-300 pb-28">
         <main class="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto pt-8 px-4 sm:px-6">
 
-            <!-- Header da categoria -->
             <div class="flex items-center gap-4 mb-10">
                 <a href="index.html" class="w-10 h-10 glass rounded-xl flex items-center justify-center border border-white/5 hover:border-blue-500/40 hover:text-blue-400 transition flex-shrink-0">
                     <i class="fa-solid fa-chevron-left text-xs"></i>
                 </a>
-                <div class="flex items-center gap-3 flex-1">
-                    <div id="cat-icon-bg" class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0">
-                        <i id="cat-icon" class="fa-solid fa-compact-disc"></i>
+                <div class="flex items-center gap-4 flex-1">
+                    <div id="cat-icon-bg" class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-white/5">
+                        <i id="cat-icon" class="fa-solid fa-music text-gray-400"></i>
                     </div>
                     <div>
-                        <h1 id="cat-titulo" class="text-3xl sm:text-4xl font-black tracking-tighter">—</h1>
-                        <p id="cat-count" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">A carregar...</p>
+                        <h1 id="cat-titulo" class="text-3xl sm:text-4xl font-black tracking-tighter leading-none">—</h1>
+                        <p id="cat-count" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">A carregar...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Grid de músicas -->
-            <div id="grid-musicas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-10">
-                <!-- Preenchido por JS -->
-            </div>
+            <div id="grid-musicas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-10"></div>
 
-            <!-- Empty state -->
             <div id="empty-state" class="hidden text-center py-24">
-                <i class="fa-solid fa-music-slash text-5xl text-gray-700 mb-4"></i>
-                <p class="text-gray-600 font-bold uppercase text-xs tracking-widest">Nenhuma faixa nesta categoria ainda</p>
+                <i class="fa-solid fa-music text-6xl text-gray-800 mb-6"></i>
+                <p class="text-gray-600 font-black uppercase text-xs tracking-widest">Nenhuma faixa nesta categoria ainda</p>
+                <p class="text-gray-700 text-xs mt-2">Publica músicas nesta categoria para aparecerem aqui</p>
             </div>
 
         </main>
     </div>
 
-    <!-- MENU DIREITO -->
     <div id="side-menu" class="fixed inset-0 z-[300] hidden">
         <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
         <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col shadow-2xl">
@@ -129,24 +126,24 @@
         </div>
     </div>
 
-    <!-- MINI PLAYER fixo em baixo -->
-    <div id="mini-player" class="fixed bottom-0 left-0 right-0 z-[400] bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 px-4 py-3 flex items-center gap-4 shadow-2xl">
-        <img id="mini-cover" src="assets/default.png" class="w-12 h-12 rounded-xl object-cover flex-shrink-0">
-        <div class="flex-1 overflow-hidden">
+    <!-- Mini Player fixo em baixo -->
+    <div id="mini-player" class="fixed bottom-0 left-0 right-0 z-[400] bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 px-4 sm:px-6 py-3 flex items-center gap-4 shadow-2xl">
+        <img id="mini-cover" src="assets/default.png" class="w-12 h-12 rounded-xl object-cover flex-shrink-0" onerror="this.src='assets/default.png'">
+        <div class="flex-1 overflow-hidden min-w-0">
             <p id="mini-title" class="text-xs font-black text-white truncate">—</p>
             <p id="mini-artist" class="text-[9px] text-gray-500 uppercase truncate">—</p>
         </div>
-        <div class="flex items-center gap-3">
-            <button onclick="musicaAnteriorCat()" class="text-gray-500 hover:text-white transition text-lg"><i class="fa-solid fa-backward-step"></i></button>
-            <button id="mini-play-btn" onclick="togglePlayCat()" class="w-10 h-10 rounded-full bg-[#EF3C54] flex items-center justify-center text-white hover:scale-105 transition shadow-lg">
+        <div class="flex items-center gap-3 flex-shrink-0">
+            <button onclick="musicaAnteriorCat()" class="text-gray-500 hover:text-white transition text-xl"><i class="fa-solid fa-backward-step"></i></button>
+            <button id="mini-play-btn" onclick="togglePlayCat()" class="w-11 h-11 rounded-full bg-[#EF3C54] flex items-center justify-center text-white hover:scale-105 transition shadow-lg">
                 <i class="fa-solid fa-play text-sm"></i>
             </button>
-            <button onclick="proximaMusicaCat()" class="text-gray-500 hover:text-white transition text-lg"><i class="fa-solid fa-forward-step"></i></button>
+            <button onclick="proximaMusicaCat()" class="text-gray-500 hover:text-white transition text-xl"><i class="fa-solid fa-forward-step"></i></button>
         </div>
         <div class="flex-1 max-w-xs hidden sm:flex items-center gap-2">
-            <span id="mini-current" class="text-[9px] text-gray-600 w-6">0:00</span>
+            <span id="mini-current" class="text-[9px] text-gray-600 w-7 text-right">0:00</span>
             <input type="range" id="mini-progress" value="0" min="0" max="100" class="w-full h-1 accent-[#EF3C54] cursor-pointer">
-            <span id="mini-duration" class="text-[9px] text-gray-600 w-6">0:00</span>
+            <span id="mini-duration" class="text-[9px] text-gray-600 w-7">0:00</span>
         </div>
     </div>
 
@@ -156,173 +153,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
-    <script>
-    // =============================================
-    // CONFIGURAÇÃO DA CATEGORIA (via URL params)
-    // =============================================
-    const ICONES = {
-        'Album':   { icon: 'fa-compact-disc',  cor: 'bg-orange-500/20 text-orange-400' },
-        'EP':      { icon: 'fa-layer-group',    cor: 'bg-yellow-500/20 text-yellow-400' },
-        'Single':  { icon: 'fa-bolt',           cor: 'bg-[#EF3C54]/20 text-[#EF3C54]' },
-        'Mixtape': { icon: 'fa-cassette-tape',  cor: 'bg-purple-500/20 text-purple-400' },
-    };
-
-    const params = new URLSearchParams(window.location.search);
-    const CATEGORIA = params.get('tipo') || 'Single';
-
-    // Aplicar visual da categoria
-    const cfg = ICONES[CATEGORIA] || { icon: 'fa-music', cor: 'bg-blue-500/20 text-blue-400' };
-    document.getElementById('cat-titulo').innerText = CATEGORIA + 's';
-    document.getElementById('cat-icon').className = `fa-solid ${cfg.icon}`;
-    document.getElementById('cat-icon-bg').className = `w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 ${cfg.cor}`;
-    document.title = `${CATEGORIA}s | Sons Bwé Fixe`;
-
-    // =============================================
-    // PLAYER LOCAL
-    // =============================================
-    let catPlaylist = [];
-    let catIndex = 0;
-    const audioEl = document.getElementById('main-audio');
-    const miniPlayer = document.getElementById('mini-player');
-    const miniPlayBtn = document.getElementById('mini-play-btn');
-    const miniProgress = document.getElementById('mini-progress');
-
-    audioEl.ontimeupdate = () => {
-        if (!isNaN(audioEl.duration)) {
-            miniProgress.value = (audioEl.currentTime / audioEl.duration) * 100;
-            document.getElementById('mini-current').innerText = fmt(audioEl.currentTime);
-            document.getElementById('mini-duration').innerText = fmt(audioEl.duration);
-        }
-    };
-    miniProgress.oninput = () => audioEl.currentTime = (miniProgress.value / 100) * audioEl.duration;
-    audioEl.onended = () => proximaMusicaCat();
-
-    function fmt(s) {
-        const m = Math.floor(s/60), sec = Math.floor(s%60);
-        return `${m}:${sec<10?'0':''}${sec}`;
-    }
-
-    function tocarMusica(idx) {
-        catIndex = idx;
-        const m = catPlaylist[idx];
-        audioEl.src = m.url;
-        audioEl.play();
-        miniPlayer.classList.add('visible');
-        miniPlayBtn.innerHTML = '<i class="fa-solid fa-pause text-sm"></i>';
-        document.getElementById('mini-title').innerText = m.titulo;
-        document.getElementById('mini-artist').innerText = m.artista;
-        document.getElementById('mini-cover').src = m.capa || 'assets/default.png';
-        // Destacar card activo
-        document.querySelectorAll('.card-musica').forEach((c,i) => {
-            c.classList.toggle('ring-2', i === idx);
-            c.classList.toggle('ring-[#EF3C54]', i === idx);
-        });
-    }
-
-    function togglePlayCat() {
-        if (!audioEl.src) return;
-        if (audioEl.paused) {
-            audioEl.play();
-            miniPlayBtn.innerHTML = '<i class="fa-solid fa-pause text-sm"></i>';
-        } else {
-            audioEl.pause();
-            miniPlayBtn.innerHTML = '<i class="fa-solid fa-play text-sm"></i>';
-        }
-    }
-
-    function proximaMusicaCat() {
-        catIndex = (catIndex + 1) % catPlaylist.length;
-        tocarMusica(catIndex);
-    }
-
-    function musicaAnteriorCat() {
-        catIndex = (catIndex - 1 + catPlaylist.length) % catPlaylist.length;
-        tocarMusica(catIndex);
-    }
-
-    // =============================================
-    // CARREGAR MÚSICAS DA CATEGORIA DO FIREBASE
-    // =============================================
-    db.collection("playlist")
-        .where("oculto", "==", false)
-        .where("tipo", "==", CATEGORIA)
-        .orderBy("ordem", "desc")
-        .onSnapshot(snap => {
-            catPlaylist = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderizarGrid(catPlaylist);
-        });
-
-    function renderizarGrid(lista) {
-        const grid = document.getElementById('grid-musicas');
-        const empty = document.getElementById('empty-state');
-        const count = document.getElementById('cat-count');
-
-        count.innerText = lista.length + (lista.length === 1 ? ' faixa' : ' faixas');
-
-        if (lista.length === 0) {
-            grid.innerHTML = '';
-            empty.classList.remove('hidden');
-            return;
-        }
-        empty.classList.add('hidden');
-        grid.innerHTML = '';
-
-        lista.forEach((m, i) => {
-            const card = document.createElement('div');
-            card.className = 'card-musica cursor-pointer rounded-[1.5rem] overflow-hidden bg-white/5 border border-white/5 hover:border-white/20 transition group';
-            card.onclick = () => tocarMusica(i);
-            card.innerHTML = `
-                <div class="relative aspect-square overflow-hidden bg-black/30">
-                    <img src="${m.capa || 'assets/default.png'}" class="w-full h-full object-cover" onerror="this.src='assets/default.png'">
-                    <div class="play-overlay absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <div class="w-12 h-12 rounded-full bg-[#EF3C54] flex items-center justify-center shadow-xl">
-                            <i class="fa-solid fa-play text-white ml-1"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-3">
-                    <p class="text-xs font-black text-white truncate">${m.titulo}</p>
-                    <p class="text-[9px] text-gray-500 uppercase font-bold truncate mt-0.5">${m.artista}</p>
-                </div>`;
-            grid.appendChild(card);
-        });
-    }
-
-    function executarPesquisaCat() {
-        const termo = document.getElementById('search-input').value.trim().toLowerCase();
-        if (termo === '') {
-            renderizarGrid(catPlaylist);
-            return;
-        }
-        const res = catPlaylist.filter(m =>
-            m.titulo.toLowerCase().includes(termo) || m.artista.toLowerCase().includes(termo)
-        );
-        renderizarGrid(res);
-    }
-
-    // =============================================
-    // SIDEBAR: carregar categorias dinâmicas
-    // =============================================
-    db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
-        const nav = document.getElementById('nav-categorias');
-        // Limpar links de categorias anteriores (manter só o "Tudo")
-        const fixos = nav.querySelectorAll('a[href="index.html"], p');
-        nav.innerHTML = '';
-        fixos.forEach(el => nav.appendChild(el));
-
-        snap.forEach(doc => {
-            const cat = doc.data();
-            const isActive = cat.nome === CATEGORIA;
-            const iconCfg = ICONES[cat.nome] || { icon: 'fa-music', cor: 'text-blue-400' };
-            const a = document.createElement('a');
-            a.href = `categoria.html?tipo=${encodeURIComponent(cat.nome)}`;
-            a.className = `category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left ${isActive ? 'sidebar-link-active' : ''}`;
-            a.innerHTML = `
-                <i class="fa-solid ${iconCfg.icon} ${iconCfg.cor.split(' ')[1] || 'text-gray-400'}"></i>
-                <span class="text-sm font-bold group-hover:text-white ${isActive ? 'text-white' : 'text-gray-400'}">${cat.nome}s</span>`;
-            nav.appendChild(a);
-        });
-    });
-    </script>
+    <script src="categoria-page.js"></script>
 </body>
 </html>
