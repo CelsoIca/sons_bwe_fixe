@@ -243,3 +243,20 @@ async function registarPlay(musicaId) {
         ultimoOuvido: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 }
+
+async function atualizarContadores() {
+    const user = auth.currentUser;
+    const statsSnap = await db.collection("users").doc(user.uid).collection("estatisticas").get();
+    
+    let totalGeralPlays = 0;
+    statsSnap.forEach(doc => {
+        totalGeralPlays += doc.data().plays || 0;
+    });
+
+    // Atualiza o HTML
+    document.querySelector('.text-[15px].font-black.italic').innerText = totalGeralPlays;
+    
+    // Lógica simples de Nível: a cada 50 plays sobe 1 nível
+    const nivel = Math.floor(totalGeralPlays / 50) + 1;
+    document.querySelector('.text-xs.font-black.text-emerald-400').innerText = `NÍVEL ${nivel}`;
+}
