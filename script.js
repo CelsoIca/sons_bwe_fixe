@@ -61,7 +61,17 @@ if (audio) {
     db.collection("playlist").where("oculto", "==", false).orderBy("ordem", "desc").onSnapshot(snap => {
         playlist = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         playlistOriginal = [...playlist];
-        if (playlist.length > 0 && audio.src === "") renderizarMusica(0);
+
+        // Renderizar lista de faixas se a função existir (index.html)
+        if (typeof renderizarListaFaixas === 'function') renderizarListaFaixas();
+
+        // Iniciar slideshow se nada estiver a tocar
+        if (typeof mostrarSlideshowOuCapa === 'function' && (!audio.src || audio.paused)) {
+            mostrarSlideshowOuCapa(false);
+        }
+
+        // Carregar primeira música sem auto-play
+        if (playlist.length > 0 && !audio.src) renderizarMusica(0);
     });
 
     audio.ontimeupdate = () => {
@@ -93,6 +103,9 @@ function renderizarMusica(i) {
         partyLights.classList.remove('hidden');
         partyLights.classList.add('animate-party');
     }
+
+    // Actualizar destaque na lista de faixas (index.html)
+    if (typeof atualizarFaixaAtiva === 'function') atualizarFaixaAtiva(i);
 }
 
 function togglePlay() {
@@ -238,20 +251,7 @@ const closeMenuEl = document.getElementById('close-menu');
 if (openMenuBtn) openMenuBtn.onclick = () => sideMenu.classList.remove('hidden');
 if (closeMenuEl) closeMenuEl.onclick = () => sideMenu.classList.add('hidden');
 
-// 10. VIGIA GLOBAL DE SESSÃO (banimento)
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        const userDoc = await db.collection("users").doc(user.uid).get();
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            if (userData.ativo === false) {
-                alert("A tua conta foi desativada.");
-                await auth.signOut();
-                window.location.href = 'index.html';
-            }
-        }
-    }
-});
+// 10. Vigia de sessão integrada no listener principal (secção 3)
 
 // 11. MONITORIZAR NOTIFICAÇÕES (só corre se o elemento existir — apenas no admin)
 function monitorarNotificacoes() {
