@@ -16,45 +16,68 @@
             </div>
         </div>
 
-        <form id="contact-form" class="glass p-10 rounded-[3.5rem] text-left space-y-5 border border-white/10 relative overflow-hidden shadow-2xl">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-[#2E5EBE]/5 blur-[60px] rounded-full"></div>
-            
-            <h2 class="font-black text-sm uppercase tracking-widest text-white flex items-center gap-2">
-                <i class="fa-solid fa-paper-plane text-[#2E5EBE]"></i> Enviar Proposta
-            </h2>
-            
-            <input type="text" id="msg-nome" placeholder="Teu Nome" required class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm">
-            <input type="email" id="msg-email" placeholder="Teu Email" required class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm">
-            <textarea id="msg-texto" placeholder="Como podemos ajudar?" required class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl h-32 outline-none focus:border-[#2E5EBE] transition text-sm resize-none"></textarea>
-            
-            <button type="submit" id="btn-enviar" class="w-full bg-[#2E5EBE] py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition">
-                ENVIAR AGORA
-            </button>
-        </form>
+     <form 
+      action="https://formspree.io/f/TEU_ID_AQUI" 
+      method="POST"
+      id="contact-form" 
+      class="glass p-10 rounded-[3.5rem] text-left space-y-5 border border-white/10 relative overflow-hidden shadow-2xl"
+    >
+    <h2 class="font-black text-sm uppercase tracking-widest text-white flex items-center gap-2">
+        <i class="fa-solid fa-paper-plane text-[#2E5EBE]"></i> Enviar Proposta
+    </h2>
+    
+    <input type="text" name="nome" placeholder="Teu Nome" required 
+    class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm">
+    
+    <input type="email" name="email" placeholder="Teu Email" required 
+    class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm">
+    
+    <textarea name="mensagem" placeholder="Como podemos ajudar?" required 
+    class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl h-32 outline-none focus:border-[#2E5EBE] transition text-sm resize-none"></textarea>
+    
+    <input type="text" name="_gotcha" style="display:none">
+
+    <button type="submit" id="btn-enviar" class="w-full bg-[#2E5EBE] py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition">
+        ENVIAR AGORA
+    </button>
+</form>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="../script.js"></script>
     <script>
-        document.getElementById('contact-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btn-enviar');
-            btn.innerText = "A ENVIAR...";
-            btn.disabled = true;
+      const form = document.getElementById("contact-form");
 
-            try {
-                await db.collection("contactos").add({
-                    nome: document.getElementById('msg-nome').value,
-                    email: document.getElementById('msg-email').value,
-                    mensagem: document.getElementById('msg-texto').value,
-                    data: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("Mensagem enviada com sucesso!");
-                e.target.reset();
-            } catch (err) { alert("Erro ao enviar."); }
-            btn.innerText = "ENVIAR AGORA";
-            btn.disabled = false;
-        });
+async function handleSubmit(event) {
+    event.preventDefault();
+    const status = document.getElementById("btn-enviar");
+    const data = new FormData(event.target);
+    
+    status.innerText = "A ENVIAR...";
+    status.disabled = true;
+
+    fetch(event.target.action, {
+        method: form.method,
+        body: data,
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            alert("✅ Proposta enviada, General! Verificamos o e-mail em breve.");
+            form.reset();
+        } else {
+            alert("❌ Erro ao enviar. Tenta novamente.");
+        }
+    }).catch(error => {
+        alert("❌ Erro de rede. Verifica a internet.");
+    }).finally(() => {
+        status.innerText = "ENVIAR AGORA";
+        status.disabled = false;
+    });
+}
+
+form.addEventListener("submit", handleSubmit);
     </script>
 </body>
