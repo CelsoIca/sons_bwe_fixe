@@ -25,9 +25,16 @@ O **Sons Bwé Fixe** é uma central de entretenimento web completa e imersiva. M
 
 ```text
 📂 sons-bwe-fixe/
-├── 📄 index.html          # Estrutura principal
-├── 📄 style.css           # Estilização e Animações Neon
-├── 📄 script.js          # Lógica do Player e UI
-├── 📂 capas/              # Capas dos álbuns (Quadradas)
-├── 📂 musicas/            # Ficheiros MP3
-└── 📂 assets/             # Logotipos e ícones adicionais
+├── /
+├── index.html
+├── parcerias.html
+├── contacto.html
+├── login.html
+├── perfil.html
+├── recuperar.html
+├── admin.html
+├── script.js
+├── admin.js
+├── style.css
+└── assets/
+    └── default.png
