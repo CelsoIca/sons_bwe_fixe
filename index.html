@@ -71,28 +71,14 @@
                 <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Resultados</p>
             </div>
 
-            <nav class="space-y-1 flex-1 overflow-y-auto">
+            <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
                 <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
+                <!-- Tudo — filtra no index -->
                 <button onclick="filtrarCategoria('all', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
                     <i class="fa-solid fa-music text-[#2E5EBE]"></i>
                     <span class="text-sm font-bold group-hover:text-white text-gray-400">Tudo</span>
                 </button>
-                <button onclick="filtrarCategoria('Album', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-compact-disc text-orange-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Albums</span>
-                </button>
-                <button onclick="filtrarCategoria('EP', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-layer-group text-yellow-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">EPs</span>
-                </button>
-                <button onclick="filtrarCategoria('Single', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-bolt text-[#EF3C54]"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Singles</span>
-                </button>
-                <button onclick="filtrarCategoria('Mixtape', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-cassette-tape text-purple-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Mixtapes</span>
-                </button>
+                <!-- Categorias dinâmicas via Firebase -->
             </nav>
 
             <div class="mt-auto pt-6 border-t border-white/5">
@@ -246,7 +232,7 @@
                         <ul class="space-y-2">
                             <li class="flex items-center gap-2 text-xs text-gray-500">
                                 <i class="fa-solid fa-envelope text-[#2E5EBE] text-[10px]"></i>
-                                geral@sonsbwefixe.com
+                                <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="34535146555874475b5a47564351525d4c511a575b59">[email&#160;protected]</a>
                             </li>
                             <li class="flex items-center gap-2 text-xs text-gray-500">
                                 <i class="fa-solid fa-location-dot text-[#EF3C54] text-[10px]"></i>
@@ -300,7 +286,7 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
@@ -451,12 +437,3 @@
         document.addEventListener('DOMContentLoaded', () => {
             const originalRenderizar = window.renderizarMusica;
             if (typeof originalRenderizar === 'function') {
-                window.renderizarMusica = function(i) {
-                    originalRenderizar(i);
-                    setTimeout(() => atualizarFaixaAtiva(i), 50);
-                };
-            }
-        });
-    </script>
-</body>
-</html>
