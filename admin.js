@@ -223,18 +223,59 @@ function carregarEstatisticas() {
 }
 
 // ==========================================
-// 6. GESTÃO DE CATEGORIAS
+// 6. GESTÃO DE CATEGORIAS — completo
 // ==========================================
+
+const ICONES_DISPONIVEIS = {
+    'fa-bolt':          '⚡ Bolt',
+    'fa-compact-disc':  '💿 Compact Disc',
+    'fa-layer-group':   '📚 Layer Group',
+    'fa-cassette-tape': '📼 Cassette',
+    'fa-music':         '🎵 Music Note',
+    'fa-microphone':    '🎤 Microphone',
+    'fa-star':          '⭐ Star',
+    'fa-fire':          '🔥 Fire',
+    'fa-headphones':    '🎧 Headphones',
+    'fa-guitar':        '🎸 Guitar',
+    'fa-drum':          '🥁 Drum',
+    'fa-record-vinyl':  '🎵 Vinyl',
+    'fa-radio':         '📻 Radio',
+};
+
+// Feedback toast em vez de alert()
+function catToast(msg, tipo = 'ok') {
+    const el = document.getElementById('cat-toast');
+    if (!el) return;
+    el.className = `mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center transition-all ${tipo === 'ok' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`;
+    el.innerText = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+// Preview em tempo real do ícone + nome ao preencher o formulário
+document.addEventListener('DOMContentLoaded', () => {
+    const nomeInput  = document.getElementById('nova-cat-nome');
+    const iconeSelect = document.getElementById('nova-cat-icone');
+    const previewIcon = document.getElementById('preview-icone');
+    const previewNome = document.getElementById('preview-nome');
+
+    function actualizarPreview() {
+        if (previewIcon) previewIcon.className = `fa-solid ${iconeSelect?.value || 'fa-bolt'} text-[#EF3C54] text-sm`;
+        if (previewNome) previewNome.innerText = nomeInput?.value.trim() || ICONES_DISPONIVEIS[iconeSelect?.value] || '—';
+    }
+
+    if (nomeInput)   nomeInput.addEventListener('input', actualizarPreview);
+    if (iconeSelect) iconeSelect.addEventListener('change', actualizarPreview);
+});
 
 // Carregar categorias no select do formulário de música
 function carregarCategoriasSelect() {
     const select = document.getElementById('adm-tipo');
     if (!select) return;
     db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
-        const val = select.value; // preservar selecção actual
+        const val = select.value;
         select.innerHTML = '';
         if (snap.empty) {
-            // Fallback: categorias padrão se não houver nenhuma criada
             ['Single','Album','EP','Mixtape'].forEach(n => {
                 select.innerHTML += `<option value="${n}">${n}</option>`;
             });
@@ -250,110 +291,208 @@ function carregarCategoriasSelect() {
 // Carregar e listar categorias no painel admin
 function carregarCategoriasAdmin() {
     const lista = document.getElementById('adm-lista-categorias');
+    const badge = document.getElementById('cat-total-badge');
+    const seedBanner = document.getElementById('seed-banner');
     if (!lista) return;
 
-    db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
+    db.collection("categorias").orderBy("ordem").onSnapshot(async snap => {
         lista.innerHTML = '';
 
+        // Mostrar/esconder banner de inicialização
+        if (seedBanner) seedBanner.classList.toggle('hidden', !snap.empty);
+        if (badge) badge.innerText = snap.size + (snap.size === 1 ? ' categoria' : ' categorias');
+
         if (snap.empty) {
-            lista.innerHTML = `<p class='text-gray-600 text-xs italic col-span-2'>Nenhuma categoria criada. Cria a primeira acima.</p>`;
+            lista.innerHTML = `<p class="text-gray-600 text-xs italic text-center py-6">Nenhuma categoria ainda. Usa o formulário acima ou inicializa as categorias padrão.</p>`;
             return;
         }
 
-        snap.forEach(doc => {
+        // Contar músicas por categoria de uma vez
+        const contagemMap = {};
+        const musicasSnap = await db.collection("playlist").get();
+        musicasSnap.forEach(d => {
+            const t = d.data().tipo || '';
+            contagemMap[t] = (contagemMap[t] || 0) + 1;
+        });
+
+        const docs = snap.docs;
+        docs.forEach((doc, idx) => {
             const cat = doc.data();
+            const total = contagemMap[cat.nome] || 0;
+            const isPrimeira = idx === 0;
+            const isUltima   = idx === docs.length - 1;
+
+            // Gerar opções do select de ícone para edição
+            const opcoesIcone = Object.entries(ICONES_DISPONIVEIS).map(([val, label]) =>
+                `<option value="${val}" ${val === (cat.icone || 'fa-music') ? 'selected' : ''}>${label}</option>`
+            ).join('');
+
             const div = document.createElement('div');
-            div.className = 'glass p-5 rounded-[1.5rem] border border-white/5 hover:border-white/10 transition flex items-center gap-4';
+            div.className = 'glass rounded-[1.5rem] border border-white/5 hover:border-white/10 transition overflow-hidden';
             div.id = `cat-card-${doc.id}`;
             div.innerHTML = `
-                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid ${cat.icone || 'fa-music'} text-[#EF3C54]"></i>
+                <!-- Modo visualização -->
+                <div id="cat-view-${doc.id}" class="p-5 flex items-center gap-4">
+                    <div class="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid ${cat.icone || 'fa-music'} text-[#EF3C54]"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="font-black text-sm text-white">${cat.nome}s</p>
+                            <span class="text-[8px] font-bold bg-white/5 text-gray-500 px-2 py-0.5 rounded-full">${total} música${total !== 1 ? 's' : ''}</span>
+                        </div>
+                        <a href="categoria.html?tipo=${encodeURIComponent(cat.nome)}" target="_blank"
+                           class="text-[9px] text-[#2E5EBE] hover:underline font-bold mt-0.5 inline-flex items-center gap-1">
+                           <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>Ver página
+                        </a>
+                    </div>
+                    <!-- Reordenar -->
+                    <div class="flex flex-col gap-1 flex-shrink-0">
+                        <button onclick="moverCategoria('${doc.id}', 'up', ${cat.ordem})" ${isPrimeira ? 'disabled' : ''}
+                            class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition disabled:opacity-20 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-up text-[9px] text-gray-400"></i>
+                        </button>
+                        <button onclick="moverCategoria('${doc.id}', 'down', ${cat.ordem})" ${isUltima ? 'disabled' : ''}
+                            class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition disabled:opacity-20 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-down text-[9px] text-gray-400"></i>
+                        </button>
+                    </div>
+                    <!-- Acções -->
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick="abrirEdicaoCategoria('${doc.id}')"
+                            class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition" title="Editar">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="eliminarCategoria('${doc.id}', '${cat.nome}', ${total})"
+                            class="w-9 h-9 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition" title="Eliminar">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex-1 overflow-hidden" id="cat-display-${doc.id}">
-                    <p class="font-black text-sm text-white">${cat.nome}</p>
-                    <p class="text-[9px] text-gray-500 uppercase font-bold">Ordem: ${cat.ordem}</p>
-                </div>
-                <div class="flex-1 hidden" id="cat-edit-${doc.id}">
-                    <input type="text" value="${cat.nome}" id="cat-edit-nome-${doc.id}"
-                        class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#EF3C54] transition">
-                </div>
-                <div class="flex gap-2 flex-shrink-0" id="cat-btns-${doc.id}">
-                    <button onclick="editarCategoria('${doc.id}')" class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition" title="Editar">
-                        <i class="fa-solid fa-pen text-xs"></i>
-                    </button>
-                    <button onclick="eliminarCategoria('${doc.id}', '${cat.nome}')" class="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition" title="Eliminar">
-                        <i class="fa-solid fa-trash text-xs"></i>
-                    </button>
-                </div>
-                <div class="hidden gap-2 flex-shrink-0" id="cat-save-btns-${doc.id}">
-                    <button onclick="guardarEdicaoCategoria('${doc.id}')" class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 transition" title="Guardar">
-                        <i class="fa-solid fa-check text-xs"></i>
-                    </button>
-                    <button onclick="cancelarEdicaoCategoria('${doc.id}', '${cat.nome}')" class="w-8 h-8 rounded-xl bg-white/5 text-gray-400 flex items-center justify-center hover:bg-white/10 transition" title="Cancelar">
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
+
+                <!-- Modo edição (escondido) -->
+                <div id="cat-edit-${doc.id}" class="hidden p-5 bg-white/3 border-t border-white/5">
+                    <p class="text-[9px] font-black uppercase text-gray-500 mb-4 tracking-widest">Editar Categoria</p>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="space-y-1">
+                            <label class="text-[8px] text-gray-600 font-bold uppercase">Nome</label>
+                            <input type="text" id="edit-nome-${doc.id}" value="${cat.nome}"
+                                class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#EF3C54] transition"
+                                onkeydown="if(event.key==='Enter') guardarEdicaoCategoria('${doc.id}')">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[8px] text-gray-600 font-bold uppercase">Ícone</label>
+                            <select id="edit-icone-${doc.id}"
+                                class="w-full bg-[#020617] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
+                                ${opcoesIcone}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="fecharEdicaoCategoria('${doc.id}')"
+                            class="px-4 py-2 rounded-xl bg-white/5 text-gray-400 text-xs font-black hover:bg-white/10 transition">
+                            CANCELAR
+                        </button>
+                        <button onclick="guardarEdicaoCategoria('${doc.id}')"
+                            class="px-5 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-black hover:bg-emerald-500/30 transition">
+                            <i class="fa-solid fa-check mr-1"></i>GUARDAR
+                        </button>
+                    </div>
                 </div>`;
+
             lista.appendChild(div);
         });
     });
 }
 
-async function criarCategoria() {
-    const nome = document.getElementById('nova-cat-nome').value.trim();
-    const icone = document.getElementById('nova-cat-icone').value;
-    if (!nome) return alert("Dá um nome à categoria!");
-
-    // Verificar se já existe
-    const existe = await db.collection("categorias").where("nome", "==", nome).get();
-    if (!existe.empty) return alert(`A categoria "${nome}" já existe!`);
-
-    // Ordem: próximo número
-    const snap = await db.collection("categorias").orderBy("ordem", "desc").limit(1).get();
-    const ordemMax = snap.empty ? 0 : (snap.docs[0].data().ordem || 0);
-
-    await db.collection("categorias").add({
-        nome, icone,
-        ordem: ordemMax + 1,
-        criada: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    document.getElementById('nova-cat-nome').value = '';
-    alert(`✅ Categoria "${nome}" criada!`);
-}
-
-function editarCategoria(id) {
-    document.getElementById(`cat-display-${id}`).classList.add('hidden');
+function abrirEdicaoCategoria(id) {
+    document.getElementById(`cat-view-${id}`).classList.add('hidden');
     document.getElementById(`cat-edit-${id}`).classList.remove('hidden');
-    document.getElementById(`cat-btns-${id}`).classList.add('hidden');
-    document.getElementById(`cat-save-btns-${id}`).classList.remove('hidden');
-    document.getElementById(`cat-save-btns-${id}`).style.display = 'flex';
+    document.getElementById(`edit-nome-${id}`).focus();
 }
 
-function cancelarEdicaoCategoria(id, nomeOriginal) {
-    document.getElementById(`cat-display-${id}`).classList.remove('hidden');
+function fecharEdicaoCategoria(id) {
+    document.getElementById(`cat-view-${id}`).classList.remove('hidden');
     document.getElementById(`cat-edit-${id}`).classList.add('hidden');
-    document.getElementById(`cat-btns-${id}`).classList.remove('hidden');
-    document.getElementById(`cat-save-btns-${id}`).classList.add('hidden');
 }
 
 async function guardarEdicaoCategoria(id) {
-    const novoNome = document.getElementById(`cat-edit-nome-${id}`).value.trim();
-    if (!novoNome) return alert("O nome não pode estar vazio!");
-    await db.collection("categorias").doc(id).update({ nome: novoNome });
-    // O onSnapshot actualiza automaticamente o card
+    const novoNome  = document.getElementById(`edit-nome-${id}`).value.trim();
+    const novoIcone = document.getElementById(`edit-icone-${id}`).value;
+    if (!novoNome) return catToast('O nome não pode estar vazio!', 'erro');
+    try {
+        await db.collection("categorias").doc(id).update({ nome: novoNome, icone: novoIcone });
+        fecharEdicaoCategoria(id);
+        catToast(`"${novoNome}" actualizada com sucesso!`);
+    } catch(e) {
+        catToast('Erro ao guardar. Tenta novamente.', 'erro');
+    }
 }
 
-async function eliminarCategoria(id, nome) {
-    if (!confirm(`Eliminar a categoria "${nome}"?\nAs músicas desta categoria não serão apagadas, apenas ficarão sem categoria visível.`)) return;
-    await db.collection("categorias").doc(id).delete();
+async function criarCategoria() {
+    const nome  = document.getElementById('nova-cat-nome').value.trim();
+    const icone = document.getElementById('nova-cat-icone').value;
+    const btn   = document.getElementById('btn-criar-cat');
+    if (!nome) return catToast('Dá um nome à categoria!', 'erro');
+
+    const existe = await db.collection("categorias").where("nome", "==", nome).get();
+    if (!existe.empty) return catToast(`"${nome}" já existe!`, 'erro');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CRIAR...';
+    try {
+        const snap = await db.collection("categorias").orderBy("ordem", "desc").limit(1).get();
+        const ordemMax = snap.empty ? 0 : (snap.docs[0].data().ordem || 0);
+        await db.collection("categorias").add({
+            nome, icone, ordem: ordemMax + 1,
+            criada: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('nova-cat-nome').value = '';
+        document.getElementById('preview-nome').innerText = '—';
+        catToast(`Categoria "${nome}" criada!`);
+    } catch(e) {
+        catToast('Erro ao criar. Tenta novamente.', 'erro');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-plus mr-2"></i>CRIAR CATEGORIA';
+    }
+}
+
+async function eliminarCategoria(id, nome, totalMusicas) {
+    const aviso = totalMusicas > 0
+        ? `⚠️ Existem ${totalMusicas} música(s) nesta categoria.\nEliminar "${nome}"? As músicas ficam sem categoria visível.`
+        : `Eliminar a categoria "${nome}"?`;
+    if (!confirm(aviso)) return;
+    try {
+        await db.collection("categorias").doc(id).delete();
+        catToast(`"${nome}" eliminada.`);
+    } catch(e) {
+        catToast('Erro ao eliminar.', 'erro');
+    }
+}
+
+async function moverCategoria(id, direcao, ordemActual) {
+    // Encontrar o vizinho para trocar a ordem
+    const query = direcao === 'up'
+        ? db.collection("categorias").where("ordem", "<", ordemActual).orderBy("ordem", "desc").limit(1)
+        : db.collection("categorias").where("ordem", ">", ordemActual).orderBy("ordem", "asc").limit(1);
+
+    const snap = await query.get();
+    if (snap.empty) return;
+
+    const vizinho = snap.docs[0];
+    const ordemVizinho = vizinho.data().ordem;
+
+    const batch = db.batch();
+    batch.update(db.collection("categorias").doc(id),       { ordem: ordemVizinho });
+    batch.update(db.collection("categorias").doc(vizinho.id), { ordem: ordemActual });
+    await batch.commit();
 }
 
 async function seedCategorias() {
     const snap = await db.collection("categorias").get();
-    if (!snap.empty) {
-        alert("Já existem categorias criadas! Não é necessário inicializar.");
-        return;
-    }
+    if (!snap.empty) { catToast('Já existem categorias!', 'erro'); return; }
+
     const defaults = [
         { nome: 'Album',   icone: 'fa-compact-disc',  ordem: 1 },
         { nome: 'EP',      icone: 'fa-layer-group',    ordem: 2 },
@@ -362,10 +501,10 @@ async function seedCategorias() {
     ];
     const batch = db.batch();
     defaults.forEach(cat => {
-        const ref = db.collection("categorias").doc();
-        batch.set(ref, { ...cat, criada: firebase.firestore.FieldValue.serverTimestamp() });
+        batch.set(db.collection("categorias").doc(), {
+            ...cat, criada: firebase.firestore.FieldValue.serverTimestamp()
+        });
     });
     await batch.commit();
-    document.getElementById('seed-banner').classList.add('hidden');
-    alert("✅ Categorias padrão criadas com sucesso!");
+    catToast('Categorias padrão criadas com sucesso!');
 }
