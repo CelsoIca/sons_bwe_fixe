@@ -97,4 +97,19 @@ async function handleSubmit(event) {
 
 form.addEventListener("submit", handleSubmit);
     </script>
+
+    <nav class="fixed left-6 top-1/2 -translate-y-1/2 flex flex-col gap-8 z-50">
+    <a href="index.html"> ... </a>
+    
+    <a href="auth/perfil.html"> ... </a>
+
+    <a href="auth/contacto.html" class="flex flex-col items-center gap-2 group">
+        <div class="w-12 h-12 glass rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-blue-500/50 transition-all shadow-xl">
+            <i class="fa-solid fa-paper-plane text-sm"></i>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-widest text-gray-500">Contacto</span>
+    </a>
+
+    <a href="auth/admin.html"> ... </a>
+</nav>
 </body>
