@@ -260,3 +260,26 @@ async function atualizarContadores() {
     const nivel = Math.floor(totalGeralPlays / 50) + 1;
     document.querySelector('.text-xs.font-black.text-emerald-400').innerText = `NÍVEL ${nivel}`;
 }
+
+function monitorarNotificacoes() {
+    // Escuta em tempo real apenas as mensagens NÃO lidas
+    db.collection("contactos").where("lido", "==", false).onSnapshot(snap => {
+        const countElement = document.getElementById('notif-count');
+        const totalNovos = snap.size;
+
+        if (totalNovos > 0) {
+            countElement.innerText = totalNovos > 99 ? "+99" : totalNovos;
+            countElement.classList.remove('hidden');
+            
+            // Opcional: Altera o título da aba do navegador para chamar atenção
+            document.title = `(${totalNovos}) Painel General | Sons Bwé Fixe`;
+        } else {
+            countElement.classList.add('hidden');
+            document.title = `Painel General | Sons Bwé Fixe`;
+        }
+    });
+}
+
+// Inicie a monitorização assim que o Admin logar
+// Chame esta função dentro do auth.onAuthStateChanged
+monitorarNotificacoes();
