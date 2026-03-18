@@ -8,26 +8,41 @@
     <link rel="stylesheet" href="../style.css">
 </head>
 <body class="bg-[#020617] text-white min-h-screen flex items-center justify-center p-6">
+    <div class="glass max-w-sm w-full rounded-[3rem] p-10 border border-white/10 text-center shadow-2xl animate-fade-in relative overflow-hidden">
+        <div class="absolute -top-10 -left-10 w-32 h-32 bg-[#EF3C54]/10 blur-[50px] rounded-full"></div>
+        
+        <h1 class="text-3xl font-black italic tracking-tighter mb-4 text-[#EF3C54]">RECUPERAR</h1>
+        <p class="text-[9px] text-gray-500 uppercase tracking-[0.3em] font-bold mb-10 leading-relaxed px-4">
+            Introduz o teu e-mail para receberes o link de redefinição
+        </p>
 
-    <div class="glass max-w-sm w-full rounded-[3rem] p-10 border border-white/10 text-center">
-        <h1 class="text-2xl font-black italic mb-4">RECUPERAR</h1>
-        <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-8">Enviaremos um link para o teu e-mail</p>
-
-        <form id="recover-form" class="space-y-6">
-            <input type="email" id="recover-email" placeholder="Teu e-mail de conta" required class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-blue-500">
+        <form id="recover-form" class="space-y-4">
+            <div class="relative">
+                <input type="email" id="recover-email" placeholder="Teu e-mail de conta" required 
+                class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:border-[#EF3C54] transition text-center">
+            </div>
             
-            <button type="submit" class="w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition">
+            <button type="submit" id="btn-recover" class="w-full bg-white text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-gray-200 hover:scale-[1.02] active:scale-95 transition shadow-xl">
                 Enviar Link
             </button>
         </form>
 
-        <a href="login.html" class="inline-block mt-8 text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] border-b border-gray-700 pb-1">Voltar ao Login</a>
+        <div class="mt-10 pt-6 border-t border-white/5">
+            <a href="login.html" class="text-[9px] text-gray-500 font-black uppercase tracking-widest hover:text-white transition underline underline-offset-8 decoration-gray-800">
+                Voltar ao Login
+            </a>
+        </div>
     </div>
 
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] opacity-0 pointer-events-none transition-all duration-500 scale-90">
-        <div class="glass border border-white/10 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 min-w-[280px]">
-            <div id="toast-icon" class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs"></div>
-            <div><p id="toast-title" class="font-black text-[10px] uppercase tracking-widest"></p><p id="toast-msg" class="text-[10px] text-gray-400"></p></div>
+        <div id="toast-bg" class="glass border border-white/10 px-8 py-5 rounded-[2rem] shadow-2xl flex items-center gap-4 min-w-[300px]">
+            <div id="toast-icon-box" class="w-10 h-10 rounded-full flex items-center justify-center text-white">
+                <i id="toast-icon" class="fa-solid"></i>
+            </div>
+            <div class="text-left">
+                <p id="toast-title" class="font-black text-[10px] uppercase tracking-wider text-white"></p>
+                <p id="toast-msg" class="text-[10px] text-gray-400 font-medium"></p>
+            </div>
         </div>
     </div>
 
@@ -37,14 +52,37 @@
     <script>
         document.getElementById('recover-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btn-recover');
             const email = document.getElementById('recover-email').value;
+            
+            btn.innerText = "ENVIANDO...";
+            btn.disabled = true;
+
             try {
                 await auth.sendPasswordResetEmail(email);
-                showToast("E-mail Enviado", "Verifica a tua caixa de entrada!", "success");
+                showToast("Sucesso", "Link enviado! Verifica o teu e-mail.", "success");
+                btn.innerText = "ENVIADO!";
             } catch (err) {
-                showToast("Erro", "E-mail não encontrado.", "error");
+                showToast("Erro", "E-mail não encontrado ou inválido.", "error");
+                btn.disabled = false;
+                btn.innerText = "TENTAR NOVAMENTE";
             }
         });
+
+        function showToast(title, msg, type) {
+            const toast = document.getElementById('toast');
+            const iconBox = document.getElementById('toast-icon-box');
+            const icon = document.getElementById('toast-icon');
+            
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            
+            iconBox.className = type === 'success' ? 'bg-green-500 w-10 h-10 rounded-full flex items-center justify-center' : 'bg-red-500 w-10 h-10 rounded-full flex items-center justify-center';
+            icon.className = type === 'success' ? 'fa-solid fa-check' : 'fa-solid fa-xmark';
+
+            toast.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+            setTimeout(() => toast.classList.add('opacity-0', 'scale-90', 'pointer-events-none'), 4000);
+        }
     </script>
 </body>
 </html>
