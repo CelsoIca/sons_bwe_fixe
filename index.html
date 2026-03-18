@@ -7,34 +7,72 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        @media (min-width: 768px) {
+            #sidebar { transform: translateX(0) !important; position: fixed; z-index: 50; }
+            #sidebar-overlay { display: none !important; }
+            #toggle-sidebar-btn { display: none !important; }
+            #main-wrapper { margin-left: 18rem; }
+        }
+        @media (max-width: 767px) {
+            #main-wrapper { margin-left: 0; }
+        }
+
+        /* Slideshow */
+        .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; }
+        .slide.active { opacity: 1; }
+
+        /* Lista de faixas */
+        .faixa-item { transition: all 0.2s; }
+        .faixa-item:hover { background: rgba(255,255,255,0.07); }
+        .faixa-item.playing { background: rgba(239,60,84,0.1); border-left: 3px solid #EF3C54; }
+        .faixa-item.playing .faixa-num { display: none; }
+        .faixa-item.playing .faixa-eq { display: flex; }
+        .faixa-eq { display: none; align-items: flex-end; gap: 2px; height: 16px; }
+        .faixa-eq span {
+            display: inline-block; width: 3px; background: #EF3C54; border-radius: 2px;
+            animation: eq-bar 0.6s ease-in-out infinite alternate;
+        }
+        .faixa-eq span:nth-child(2) { animation-delay: 0.2s; }
+        .faixa-eq span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes eq-bar {
+            from { height: 4px; }
+            to { height: 14px; }
+        }
+    </style>
 </head>
 <body class="bg-[#020617] text-white">
 
-    <button onclick="toggleSidebar()" class="fixed top-6 left-6 z-[100] glass w-12 h-12 flex items-center justify-center rounded-full border border-white/10 hover:bg-white/10 hover:scale-110 transition-all shadow-xl text-[#2E5EBE]">
+    <!-- Botão toggle sidebar mobile -->
+    <button id="toggle-sidebar-btn" onclick="toggleSidebar()" class="fixed top-6 left-6 z-[100] glass w-12 h-12 flex items-center justify-center rounded-full border border-white/10 hover:bg-white/10 hover:scale-110 transition-all shadow-xl text-[#2E5EBE]">
         <i class="fa-solid fa-bars-staggered"></i>
     </button>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[200] w-72 bg-[#020617]/95 backdrop-blur-xl border-r border-white/5 transform -translate-x-full transition-transform duration-300 ease-in-out">
+    <!-- SIDEBAR ESQUERDA -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[200] w-72 bg-[#020617]/95 backdrop-blur-xl border-r border-white/5 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="p-8 h-full flex flex-col">
-            <div class="flex items-center justify-between mb-10">
-                <h2 class="text-xl font-black uppercase tracking-tighter">Explorar</h2>
-                <button onclick="toggleSidebar()" class="text-gray-500 hover:text-white transition">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-xl font-black uppercase tracking-tighter">Explorar</h2>
+                    <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-0.5">Sons Bwé Fixe</p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-white transition">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
 
             <div class="relative mb-6">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs transition-colors" id="search-icon"></i>
-                <input type="text" id="search-input" oninput="executarPesquisa()" placeholder="Pesquisar faixa ou artista..." 
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs" id="search-icon"></i>
+                <input type="text" id="search-input" oninput="executarPesquisa()" placeholder="Pesquisar faixa ou artista..."
                     class="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-xs outline-none focus:border-[#EF3C54] transition">
             </div>
 
-            <div id="search-results" class="hidden space-y-3 max-h-[300px] overflow-y-auto pr-2 mb-8 border-b border-white/5 pb-6">
+            <div id="search-results" class="hidden space-y-3 max-h-[260px] overflow-y-auto pr-2 mb-6 border-b border-white/5 pb-6">
                 <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Resultados</p>
             </div>
 
-            <nav class="space-y-2 flex-1 overflow-y-auto">
-                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-4 ml-2">Categorias</p>
+            <nav class="space-y-1 flex-1 overflow-y-auto">
+                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
                 <button onclick="filtrarCategoria('all', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
                     <i class="fa-solid fa-music text-[#2E5EBE]"></i>
                     <span class="text-sm font-bold group-hover:text-white text-gray-400">Tudo</span>
@@ -65,45 +103,79 @@
 
     <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-[150] hidden backdrop-blur-sm"></div>
 
+    <!-- Botão menu direito -->
     <button id="open-menu" class="fixed top-6 right-6 z-[100] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg hover:scale-110 active:scale-90 transition flex items-center justify-center">
         <i class="fa-solid fa-bars"></i>
     </button>
 
-    <main class="max-w-md mx-auto pt-20 p-6">
-        <div class="glass rounded-[3rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden">
-            <div id="cover-container" class="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden bg-black/20 shadow-inner">
-                <img id="main-cover" src="assets/default.png" class="w-full h-full object-cover transition-opacity duration-500">
-                <div id="party-lights" class="hidden"></div> 
-            </div>
-            
-            <div class="mb-6">
-                <h2 id="main-title" class="text-2xl font-black truncate">Carregando...</h2>
-                <p id="main-artist" class="text-gray-500 uppercase text-xs tracking-widest mt-1">Sons Bwé Fixe</p>
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div id="main-wrapper" class="transition-all duration-300">
+        <main class="max-w-md mx-auto pt-8 p-6 pb-16">
+
+            <!-- CABEÇALHO: Logo + Nome -->
+            <div class="flex items-center gap-4 mb-8 pl-2">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#2E5EBE] to-[#EF3C54] flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0 border-2 border-white/10">
+                    <i class="fa-solid fa-headphones text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tighter leading-none">Sons Bwé <span class="text-[#EF3C54]">Fixe</span></h1>
+                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.25em] mt-1">Angola para o Mundo</p>
+                </div>
             </div>
 
-            <audio id="main-audio"></audio>
-            
-            <div class="flex items-center gap-2 mb-8">
-                <span id="current-time" class="text-[9px] text-gray-500">0:00</span>
-                <input type="range" id="progress-bar" value="0" min="0" max="100" 
-                    class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
-                <span id="duration-time" class="text-[9px] text-gray-500">0:00</span>
+            <!-- PLAYER -->
+            <div class="glass rounded-[3rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden mb-6">
+
+                <!-- Capa / Slideshow -->
+                <div id="cover-container" class="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden bg-black/20 shadow-inner">
+                    <!-- Imagem da música a tocar -->
+                    <img id="main-cover" src="assets/default.png" class="w-full h-full object-cover transition-opacity duration-500 absolute inset-0 z-10">
+                    <!-- Slideshow (visível quando nada toca) -->
+                    <div id="slideshow" class="absolute inset-0 z-0"></div>
+                    <!-- Party lights -->
+                    <div id="party-lights" class="hidden"></div>
+                </div>
+
+                <div class="mb-6">
+                    <h2 id="main-title" class="text-2xl font-black truncate">Sons Bwé Fixe</h2>
+                    <p id="main-artist" class="text-gray-500 uppercase text-xs tracking-widest mt-1">Seleciona uma faixa</p>
+                </div>
+
+                <audio id="main-audio"></audio>
+
+                <div class="flex items-center gap-2 mb-8">
+                    <span id="current-time" class="text-[9px] text-gray-500">0:00</span>
+                    <input type="range" id="progress-bar" value="0" min="0" max="100"
+                        class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
+                    <span id="duration-time" class="text-[9px] text-gray-500">0:00</span>
+                </div>
+
+                <div class="flex justify-between items-center px-4">
+                    <button onclick="musicaAnterior()" class="text-xl text-gray-500 hover:text-white transition">
+                        <i class="fa-solid fa-backward-step"></i>
+                    </button>
+                    <button id="play-btn" onclick="togglePlay()" class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-3xl shadow-lg shadow-pink-500/20 hover:scale-105 active:scale-95 transition flex items-center justify-center">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <button onclick="proximaMusica()" class="text-xl text-gray-500 hover:text-white transition">
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="flex justify-between items-center px-4">
-                <button onclick="musicaAnterior()" class="text-xl text-gray-500 hover:text-white transition">
-                    <i class="fa-solid fa-backward-step"></i>
-                </button>
-                <button id="play-btn" onclick="togglePlay()" class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-3xl shadow-lg shadow-pink-500/20 hover:scale-105 active:scale-95 transition flex items-center justify-center">
-                    <i class="fa-solid fa-play"></i>
-                </button>
-                <button onclick="proximaMusica()" class="text-xl text-gray-500 hover:text-white transition">
-                    <i class="fa-solid fa-forward-step"></i>
-                </button>
+            <!-- LISTA DE FAIXAS -->
+            <div class="glass rounded-[2rem] border border-white/10 overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Todas as Faixas</h3>
+                    <span id="total-faixas" class="text-[9px] text-gray-600 font-bold">—</span>
+                </div>
+                <div id="lista-faixas" class="divide-y divide-white/5 max-h-[420px] overflow-y-auto"></div>
             </div>
-        </div>
-    </main>
 
+        </main>
+    </div>
+
+    <!-- MENU DIREITO -->
     <div id="side-menu" class="fixed inset-0 z-[300] hidden">
         <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
         <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col shadow-2xl">
@@ -112,7 +184,7 @@
                 <a href="index.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-house text-[#2E5EBE]"></i>Home</a>
                 <a href="login.html" id="link-login" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-right-to-bracket text-[#2E5EBE]"></i>Entrar</a>
                 <a href="perfil.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-user text-[#2E5EBE]"></i>Perfil</a>
-                <a href="contacto.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-handshake text-[#2E5EBE]"></i>Contactos</a>
+                <a href="contacto.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-envelope text-[#2E5EBE]"></i>Contactos</a>
                 <a href="admin.html" id="link-admin" class="hidden mt-4 pt-4 border-t border-white/10 text-orange-500 hover:text-orange-400 flex items-center gap-3">
                     <i class="fa-solid fa-shield-halved"></i>Admin
                 </a>
@@ -127,5 +199,159 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
+    <script>
+        // =============================================
+        // SLIDESHOW — corre quando nenhuma música toca
+        // =============================================
+        let slideshowInterval = null;
+        let slideshowIndex = 0;
+        let slideshowCapas = [];
+
+        function iniciarSlideshow() {
+            const capas = playlistOriginal.map(m => m.capa).filter(c => c && c.trim() !== '');
+            // Remover duplicados
+            slideshowCapas = [...new Set(capas)];
+            if (slideshowCapas.length === 0) return;
+
+            const container = document.getElementById('slideshow');
+            container.innerHTML = '';
+            slideshowCapas.forEach((capa, i) => {
+                const div = document.createElement('div');
+                div.className = 'slide' + (i === 0 ? ' active' : '');
+                div.innerHTML = `<img src="${capa}" class="w-full h-full object-cover" onerror="this.parentElement.remove()">`;
+                container.appendChild(div);
+            });
+
+            slideshowIndex = 0;
+            clearInterval(slideshowInterval);
+            slideshowInterval = setInterval(() => {
+                const slides = container.querySelectorAll('.slide');
+                if (slides.length === 0) return;
+                slides[slideshowIndex % slides.length].classList.remove('active');
+                slideshowIndex = (slideshowIndex + 1) % slides.length;
+                slides[slideshowIndex].classList.add('active');
+            }, 3000);
+        }
+
+        function pararSlideshow() {
+            clearInterval(slideshowInterval);
+            slideshowInterval = null;
+        }
+
+        function mostrarSlideshowOuCapa(musicaTocando) {
+            const mainCoverEl = document.getElementById('main-cover');
+            const slideshowEl = document.getElementById('slideshow');
+            if (musicaTocando) {
+                // Mostra capa da música, esconde slideshow
+                mainCoverEl.style.zIndex = '10';
+                mainCoverEl.style.opacity = '1';
+                slideshowEl.style.opacity = '0';
+                pararSlideshow();
+            } else {
+                // Esconde capa, mostra slideshow
+                mainCoverEl.style.opacity = '0';
+                mainCoverEl.style.zIndex = '0';
+                slideshowEl.style.opacity = '1';
+                iniciarSlideshow();
+            }
+        }
+
+        // =============================================
+        // LISTA DE FAIXAS
+        // =============================================
+        function renderizarListaFaixas() {
+            const lista = document.getElementById('lista-faixas');
+            const total = document.getElementById('total-faixas');
+            total.innerText = playlist.length + ' faixas';
+            lista.innerHTML = '';
+
+            if (playlist.length === 0) {
+                lista.innerHTML = '<p class="text-center text-gray-600 text-xs py-8 italic">Nenhuma faixa disponível.</p>';
+                return;
+            }
+
+            playlist.forEach((m, i) => {
+                const isAtual = i === indexMusica && audio.src;
+                const div = document.createElement('div');
+                div.id = 'faixa-' + i;
+                div.className = 'faixa-item px-5 py-4 flex items-center gap-4 cursor-pointer' + (isAtual ? ' playing' : '');
+                div.onclick = () => {
+                    renderizarMusica(i);
+                    audio.play();
+                    playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                    playBtn.classList.add('animate-pulse-pink');
+                    mostrarSlideshowOuCapa(true);
+                    atualizarFaixaAtiva(i);
+                };
+                div.innerHTML = `
+                    <div class="w-6 flex items-center justify-center flex-shrink-0">
+                        <span class="faixa-num text-[10px] text-gray-600 font-black">${i + 1}</span>
+                        <div class="faixa-eq">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    <img src="${m.capa || 'assets/default.png'}" class="w-10 h-10 rounded-xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-xs font-black text-white truncate">${m.titulo}</p>
+                        <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
+                    </div>
+                    <span class="text-[9px] text-gray-600 font-bold uppercase flex-shrink-0">${m.tipo || 'Single'}</span>
+                `;
+                lista.appendChild(div);
+            });
+        }
+
+        function atualizarFaixaAtiva(idx) {
+            document.querySelectorAll('.faixa-item').forEach((el, i) => {
+                el.classList.toggle('playing', i === idx);
+            });
+        }
+
+        // =============================================
+        // OVERRIDE: quando playlist carrega do Firebase
+        // =============================================
+        // Aguarda o script.js terminar de configurar o Firebase listener
+        // e depois sobrepõe o comportamento do onSnapshot
+        document.addEventListener('DOMContentLoaded', () => {
+            // Iniciar slideshow após um delay (espera playlist carregar)
+            setTimeout(() => {
+                if (!audio.src || audio.paused) {
+                    mostrarSlideshowOuCapa(false);
+                }
+            }, 1500);
+        });
+
+        // Monitorar estado do áudio para alternar slideshow <-> capa
+        document.addEventListener('DOMContentLoaded', () => {
+            const audioEl = document.getElementById('main-audio');
+
+            audioEl.addEventListener('play', () => mostrarSlideshowOuCapa(true));
+            audioEl.addEventListener('pause', () => mostrarSlideshowOuCapa(false));
+            audioEl.addEventListener('ended', () => mostrarSlideshowOuCapa(false));
+        });
+
+        // Hook: quando a playlist é carregada pelo script.js, renderizar lista e slideshow
+        // Usamos MutationObserver no título para detectar quando a música carrega
+        const titleEl = document.getElementById('main-title');
+        const listObserver = new MutationObserver(() => {
+            renderizarListaFaixas();
+            if (!audio || audio.paused) {
+                mostrarSlideshowOuCapa(false);
+            }
+        });
+        // Observar mudanças no título (indica que playlist foi carregada)
+        if (titleEl) listObserver.observe(titleEl, { childList: true, characterData: true, subtree: true });
+
+        // Override da função renderizarMusica para actualizar lista
+        document.addEventListener('DOMContentLoaded', () => {
+            const originalRenderizar = window.renderizarMusica;
+            if (typeof originalRenderizar === 'function') {
+                window.renderizarMusica = function(i) {
+                    originalRenderizar(i);
+                    setTimeout(() => atualizarFaixaAtiva(i), 50);
+                };
+            }
+        });
+    </script>
 </body>
 </html>
