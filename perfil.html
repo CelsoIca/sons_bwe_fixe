@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil | Sons Bwé Fixe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="bg-[#020617] text-white min-h-screen flex flex-col md:flex-row">
+
+    <aside class="w-full md:w-80 bg-[#03081c] border-r border-white/5 p-8 flex flex-col gap-6 overflow-y-auto h-screen sticky top-0">
+        <div class="mb-4">
+            <h1 class="text-[10px] font-black uppercase tracking-[0.4em] text-[#EF3C54]">Sons Bwé Fixe</h1>
+            <p class="text-[8px] text-gray-600 font-bold">Painel do Ouvinte</p>
+        </div>
+
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <label class="text-[9px] font-black text-gray-500 uppercase">Nome de Exibição</label>
+                <input type="text" id="edit-nome" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition" placeholder="Teu Nome">
+            </div>
+
+            <div class="space-y-2 opacity-60">
+                <label class="text-[9px] font-black text-gray-500 uppercase">E-mail (Privado)</label>
+                <div id="user-email" class="text-xs font-medium px-1">carregando...</div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div class="space-y-2">
+                    <label class="text-[9px] font-black text-gray-500 uppercase">Localização</label>
+                    <input type="text" id="edit-local" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-blue-500" placeholder="Ex: Luanda, AO">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[9px] font-black text-gray-500 uppercase">Contacto</label>
+                    <input type="tel" id="edit-tel" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs outline-none focus:border-blue-500" placeholder="+244 ...">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[9px] font-black text-gray-500 uppercase">Gostos Musicais</label>
+                <textarea id="edit-gostos" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs h-20 outline-none resize-none focus:border-blue-500" placeholder="Ex: Kizomba, Rap, Semba..."></textarea>
+            </div>
+
+            <button onclick="salvarPerfil()" id="btn-save" class="w-full bg-blue-600 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/10">
+                Guardar Alterações
+            </button>
+        </div>
+
+        <div class="mt-auto pt-6 border-t border-white/5">
+            <div class="glass p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="text-[8px] font-black text-gray-500 uppercase">Rank de Ouvinte</p>
+                    <p class="text-xs font-black text-emerald-400">NÍVEL 12</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[15px] font-black italic">452</p>
+                    <p class="text-[7px] text-gray-600 font-bold uppercase">Plays</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-12 overflow-y-auto">
+        <nav class="flex justify-between items-center mb-12">
+            <a href="../index.html" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:scale-110 transition border border-white/10">
+                <i class="fa-solid fa-house text-xs"></i>
+            </a>
+            <button onclick="auth.signOut().then(() => location.href='login.html')" class="group flex items-center gap-3 bg-red-500/10 hover:bg-red-500 px-6 py-3 rounded-full transition-all">
+                <span class="text-[9px] font-black uppercase tracking-widest text-red-500 group-hover:text-white">Logoff</span>
+                <i class="fa-solid fa-power-off text-xs text-red-500 group-hover:text-white"></i>
+            </button>
+        </nav>
+
+        <section class="flex flex-col items-center mb-16 animate-fade-in">
+            <div class="relative group">
+                <div class="w-40 h-40 rounded-[3rem] border-4 border-[#2E5EBE] overflow-hidden bg-white/5 shadow-2xl flex items-center justify-center">
+                    <img id="display-photo" src="" class="w-full h-full object-cover hidden">
+                    <span id="display-initial" class="text-5xl font-black text-blue-500">?</span>
+                </div>
+                
+                <div class="absolute -bottom-2 -right-2 flex flex-col gap-2">
+                    <label for="upload-photo" class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center cursor-pointer hover:scale-110 transition shadow-xl">
+                        <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                        <input type="file" id="upload-photo" class="hidden" accept="image/*" onchange="processarFoto(this)">
+                    </label>
+                    <button onclick="abrirCamera()" class="w-10 h-10 bg-[#EF3C54] rounded-2xl flex items-center justify-center hover:scale-110 transition shadow-xl">
+                        <i class="fa-solid fa-camera text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <h2 id="display-name" class="mt-6 text-3xl font-black italic tracking-tighter">Utilizador</h2>
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Membro Oficial</p>
+        </section>
+
+        <section class="max-w-2xl mx-auto">
+            <h3 class="text-[10px] font-black uppercase text-gray-500 mb-6 tracking-[0.3em] flex items-center gap-3">
+                <span class="w-8 h-px bg-white/10"></span> Mais Ouvidas por Ti
+            </h3>
+            
+            <div id="lista-mais-ouvidas" class="space-y-3">
+                <div class="glass p-4 rounded-[1.5rem] border border-white/5 flex items-center justify-between hover:border-blue-500/30 transition group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 overflow-hidden">
+                            <img src="../assets/thumb.jpg" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black">Título da Música</h4>
+                            <p class="text-[9px] text-gray-500 uppercase">Nome do Artista</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-blue-400">24 Plays</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="../script.js"></script>
+    
+    <script>
+        async function carregarMusicasMaisOuvidas() {
+    const user = auth.currentUser;
+    const listaContainer = document.getElementById('lista-mais-ouvidas');
+    
+    // 1. Vai buscar as 5 músicas com mais plays do utilizador
+    const statsSnap = await db.collection("users").doc(user.uid)
+        .collection("estatisticas")
+        .orderBy("plays", "desc")
+        .limit(5)
+        .get();
+
+    if (statsSnap.empty) {
+        listaContainer.innerHTML = "<p class='text-[10px] text-gray-600 italic'>Ainda não ouviste nenhuma música, General!</p>";
+        return;
+    }
+
+    listaContainer.innerHTML = ""; // Limpa o carregando
+
+    statsSnap.forEach(async (statDoc) => {
+        const musicaId = statDoc.id;
+        const plays = statDoc.data().plays;
+
+        // 2. Procura os detalhes da música (Nome/Capa) na coleção global
+        const musicaDoc = await db.collection("playlist").doc(musicaId).get();
+        if (musicaDoc.exists) {
+            const m = musicaDoc.data();
+            
+            const card = document.createElement('div');
+            card.className = "glass p-4 rounded-[1.5rem] border border-white/5 flex items-center justify-between hover:border-blue-500/30 transition group animate-fade-in";
+            card.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-white/5 overflow-hidden shadow-lg">
+                        <img src="${m.capa || '../assets/default-thumb.jpg'}" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-white group-hover:text-blue-400 transition">${m.titulo}</h4>
+                        <p class="text-[9px] text-gray-500 uppercase font-bold">${m.artista}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-blue-400 italic">${plays} PLAYS</p>
+                </div>
+            `;
+            listaContainer.appendChild(card);
+        }
+    });
+}
+
+// Não esqueças de chamar esta função dentro do auth.onAuthStateChanged
+auth.onAuthStateChanged((user) => {
+    if(user) {
+        carregarMusicasMaisOuvidas();
+    }
+});
+        
+        // Carregar Dados Iniciais
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const doc = await db.collection("users").doc(user.uid).get();
+                const data = doc.data();
+                
+                // Preencher Sidebar
+                document.getElementById('edit-nome').value = data.nome || "";
+                document.getElementById('user-email').innerText = data.email || user.email;
+                document.getElementById('edit-local').value = data.localizacao || "";
+                document.getElementById('edit-tel').value = data.contacto || "";
+                document.getElementById('edit-gostos').value = data.gostos || "";
+                
+                // Preencher Centro
+                document.getElementById('display-name').innerText = data.nome || "Utilizador";
+                if(data.fotoUrl) {
+                    const img = document.getElementById('display-photo');
+                    img.src = data.fotoUrl;
+                    img.classList.remove('hidden');
+                    document.getElementById('display-initial').classList.add('hidden');
+                }
+            } else { location.href = 'login.html'; }
+        });
+
+        // Salvar Alterações de Texto
+        async function salvarPerfil() {
+            const btn = document.getElementById('btn-save');
+            btn.innerText = "A GUARDAR...";
+            try {
+                await db.collection("users").doc(auth.currentUser.uid).update({
+                    nome: document.getElementById('edit-nome').value,
+                    localizacao: document.getElementById('edit-local').value,
+                    contacto: document.getElementById('edit-tel').value,
+                    gostos: document.getElementById('edit-gostos').value
+                });
+                alert("Perfil atualizado!");
+                location.reload();
+            } catch (e) { alert("Erro ao salvar."); }
+            btn.innerText = "Guardar Alterações";
+        }
+
+        // Processar Foto (Upload ImgBB)
+        async function processarFoto(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const link = await uploadParaImgBB(file);
+            if(link) {
+                await db.collection("users").doc(auth.currentUser.uid).update({ fotoUrl: link });
+                location.reload();
+            }
+        }
+
+        // Função para abrir câmera (Simples via input capture)
+        function abrirCamera() {
+            const camInput = document.createElement('input');
+            camInput.type = 'file';
+            camInput.accept = 'image/*';
+            camInput.capture = 'user';
+            camInput.onchange = (e) => processarFoto(e.target);
+            camInput.click();
+        }
+    </script>
+</body>
+</html>
