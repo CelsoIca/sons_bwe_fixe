@@ -13,26 +13,40 @@ const ICONES_CAT = {
 const CATS_PADRAO = ['Album', 'EP', 'Single', 'Mixtape'];
 
 // =============================================
-// 1. CATEGORIAS EXTRAS DINÂMICAS NA SIDEBAR
-//    (apenas as que não são padrão)
+// 1. TODAS AS CATEGORIAS NA SIDEBAR
+//    (carregadas do Firebase em tempo real)
 // =============================================
+const COR_ICONE_INDEX = {
+    'fa-compact-disc': 'text-orange-500', 'fa-layer-group': 'text-yellow-500',
+    'fa-bolt': 'text-[#EF3C54]',          'fa-cassette-tape': 'text-purple-500',
+    'fa-microphone': 'text-pink-400',     'fa-star': 'text-yellow-300',
+    'fa-fire': 'text-red-400',            'fa-headphones': 'text-blue-400',
+    'fa-guitar': 'text-green-400',        'fa-drum': 'text-indigo-400',
+    'fa-record-vinyl': 'text-teal-400',   'fa-radio': 'text-cyan-400',
+    'fa-music': 'text-blue-400',
+};
+
 db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
-    const container = document.getElementById('cats-extras');
-    if (!container) return;
-    container.innerHTML = '';
+    const nav = document.getElementById('nav-categorias');
+    if (!nav) return;
+
+    // Manter só o parágrafo e o botão "Tudo"
+    const fixos = Array.from(nav.children).filter(el =>
+        el.tagName === 'P' || el.tagName === 'BUTTON'
+    );
+    nav.innerHTML = '';
+    fixos.forEach(el => nav.appendChild(el));
 
     snap.forEach(doc => {
         const cat = doc.data();
-        if (CATS_PADRAO.includes(cat.nome)) return; // já tem link fixo
-
-        const cfg = ICONES_CAT[cat.nome] || { icon: 'fa-music', cor: 'text-blue-400' };
+        const corIcone = COR_ICONE_INDEX[cat.icone || 'fa-music'] || 'text-blue-400';
         const a = document.createElement('a');
-        a.href = `categoria.html?tipo=${encodeURIComponent(cat.nome)}`;
+        a.href      = `categoria.html?tipo=${encodeURIComponent(cat.nome)}`;
         a.className = 'category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left';
         a.innerHTML = `
-            <i class="fa-solid ${cfg.icon} ${cfg.cor}"></i>
+            <i class="fa-solid ${cat.icone || 'fa-music'} ${corIcone}"></i>
             <span class="text-sm font-bold group-hover:text-white text-gray-400">${cat.nome}s</span>`;
-        container.appendChild(a);
+        nav.appendChild(a);
     });
 });
 
