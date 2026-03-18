@@ -110,66 +110,63 @@
 
     <!-- CONTEÚDO PRINCIPAL -->
     <div id="main-wrapper" class="transition-all duration-300">
-        <main class="max-w-md mx-auto pt-8 p-6 pb-16">
+        <main class="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto pt-8 px-4 sm:px-6 pb-16">
 
             <!-- CABEÇALHO: Logo + Nome -->
             <div class="flex items-center gap-4 mb-8 pl-2">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#2E5EBE] to-[#EF3C54] flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0 border-2 border-white/10">
-                    <i class="fa-solid fa-headphones text-xl text-white"></i>
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#2E5EBE] to-[#EF3C54] flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0 border-2 border-white/10">
+                    <i class="fa-solid fa-headphones text-xl sm:text-2xl text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-tighter leading-none">Sons Bwé <span class="text-[#EF3C54]">Fixe</span></h1>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.25em] mt-1">Angola para o Mundo</p>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter leading-none">Sons Bwé <span class="text-[#EF3C54]">Fixe</span></h1>
+                    <p class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-[0.25em] mt-1">Angola para o Mundo</p>
                 </div>
             </div>
 
             <!-- PLAYER -->
-            <div class="glass rounded-[3rem] p-8 text-center border border-white/10 shadow-2xl relative overflow-hidden mb-6">
+            <div class="glass rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-8 md:p-10 lg:p-12 text-center border border-white/10 shadow-2xl relative overflow-hidden mb-6">
 
                 <!-- Capa / Slideshow -->
-                <div id="cover-container" class="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden bg-black/20 shadow-inner">
-                    <!-- Imagem da música a tocar -->
+                <div id="cover-container" class="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto aspect-square rounded-2xl sm:rounded-3xl mb-6 md:mb-8 overflow-hidden bg-black/20 shadow-inner">
                     <img id="main-cover" src="assets/default.png" class="w-full h-full object-cover transition-opacity duration-500 absolute inset-0 z-10">
-                    <!-- Slideshow (visível quando nada toca) -->
                     <div id="slideshow" class="absolute inset-0 z-0"></div>
-                    <!-- Party lights -->
                     <div id="party-lights" class="hidden"></div>
                 </div>
 
-                <div class="mb-6">
-                    <h2 id="main-title" class="text-2xl font-black truncate">Sons Bwé Fixe</h2>
-                    <p id="main-artist" class="text-gray-500 uppercase text-xs tracking-widest mt-1">Seleciona uma faixa</p>
+                <div class="mb-6 md:mb-8">
+                    <h2 id="main-title" class="text-2xl sm:text-3xl md:text-4xl font-black truncate">Sons Bwé Fixe</h2>
+                    <p id="main-artist" class="text-gray-500 uppercase text-xs sm:text-sm tracking-widest mt-2">Seleciona uma faixa</p>
                 </div>
 
                 <audio id="main-audio"></audio>
 
-                <div class="flex items-center gap-2 mb-8">
-                    <span id="current-time" class="text-[9px] text-gray-500">0:00</span>
+                <div class="flex items-center gap-3 mb-8 md:mb-10 max-w-lg mx-auto">
+                    <span id="current-time" class="text-[9px] sm:text-xs text-gray-500 w-8 text-right flex-shrink-0">0:00</span>
                     <input type="range" id="progress-bar" value="0" min="0" max="100"
-                        class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
-                    <span id="duration-time" class="text-[9px] text-gray-500">0:00</span>
+                        class="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
+                    <span id="duration-time" class="text-[9px] sm:text-xs text-gray-500 w-8 text-left flex-shrink-0">0:00</span>
                 </div>
 
-                <div class="flex justify-between items-center px-4">
-                    <button onclick="musicaAnterior()" class="text-xl text-gray-500 hover:text-white transition">
+                <div class="flex justify-between items-center px-4 sm:px-10 md:px-20 max-w-sm sm:max-w-md md:max-w-lg mx-auto">
+                    <button onclick="musicaAnterior()" class="text-2xl sm:text-3xl text-gray-500 hover:text-white hover:scale-110 transition">
                         <i class="fa-solid fa-backward-step"></i>
                     </button>
-                    <button id="play-btn" onclick="togglePlay()" class="w-20 h-20 rounded-full bg-[#EF3C54] text-white text-3xl shadow-lg shadow-pink-500/20 hover:scale-105 active:scale-95 transition flex items-center justify-center">
+                    <button id="play-btn" onclick="togglePlay()" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-[#EF3C54] text-white text-3xl sm:text-4xl md:text-5xl shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition flex items-center justify-center">
                         <i class="fa-solid fa-play"></i>
                     </button>
-                    <button onclick="proximaMusica()" class="text-xl text-gray-500 hover:text-white transition">
+                    <button onclick="proximaMusica()" class="text-2xl sm:text-3xl text-gray-500 hover:text-white hover:scale-110 transition">
                         <i class="fa-solid fa-forward-step"></i>
                     </button>
                 </div>
             </div>
 
             <!-- LISTA DE FAIXAS -->
-            <div class="glass rounded-[2rem] border border-white/10 overflow-hidden">
+            <div class="glass rounded-[2rem] border border-white/10 overflow-hidden w-full">
                 <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                     <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Todas as Faixas</h3>
                     <span id="total-faixas" class="text-[9px] text-gray-600 font-bold">—</span>
                 </div>
-                <div id="lista-faixas" class="divide-y divide-white/5 max-h-[420px] overflow-y-auto"></div>
+                <div id="lista-faixas" class="divide-y divide-white/5 max-h-[420px] sm:max-h-[520px] md:max-h-[620px] overflow-y-auto"></div>
             </div>
 
         </main>
@@ -178,7 +175,7 @@
         <footer class="border-t border-white/5 mt-4">
 
             <!-- Banda superior: Logo + tagline + redes sociais -->
-            <div class="max-w-md mx-auto px-6 py-10">
+            <div class="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
                 <!-- Logo + nome -->
                 <div class="flex items-center gap-4 mb-6">
