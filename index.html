@@ -73,12 +73,34 @@
 
             <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
                 <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
-                <!-- Tudo — filtra no index -->
+
                 <button onclick="filtrarCategoria('all', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
                     <i class="fa-solid fa-music text-[#2E5EBE]"></i>
                     <span class="text-sm font-bold group-hover:text-white text-gray-400">Tudo</span>
                 </button>
-                <!-- Categorias dinâmicas via Firebase -->
+
+                <a href="categoria.html?tipo=Album" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-compact-disc text-orange-500"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Albums</span>
+                </a>
+
+                <a href="categoria.html?tipo=EP" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-layer-group text-yellow-500"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">EPs</span>
+                </a>
+
+                <a href="categoria.html?tipo=Single" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-bolt text-[#EF3C54]"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Singles</span>
+                </a>
+
+                <a href="categoria.html?tipo=Mixtape" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                    <i class="fa-solid fa-cassette-tape text-purple-500"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Mixtapes</span>
+                </a>
+
+                <!-- Categorias extras criadas pelo admin — adicionadas dinamicamente -->
+                <div id="cats-extras"></div>
             </nav>
 
             <div class="mt-auto pt-6 border-t border-white/5">
@@ -286,154 +308,10 @@
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
-    <script>
-        // =============================================
-        // SLIDESHOW — corre quando nenhuma música toca
-        // =============================================
-        let slideshowInterval = null;
-        let slideshowIndex = 0;
-        let slideshowCapas = [];
-
-        function iniciarSlideshow() {
-            const capas = playlistOriginal.map(m => m.capa).filter(c => c && c.trim() !== '');
-            // Remover duplicados
-            slideshowCapas = [...new Set(capas)];
-            if (slideshowCapas.length === 0) return;
-
-            const container = document.getElementById('slideshow');
-            container.innerHTML = '';
-            slideshowCapas.forEach((capa, i) => {
-                const div = document.createElement('div');
-                div.className = 'slide' + (i === 0 ? ' active' : '');
-                div.innerHTML = `<img src="${capa}" class="w-full h-full object-cover" onerror="this.parentElement.remove()">`;
-                container.appendChild(div);
-            });
-
-            slideshowIndex = 0;
-            clearInterval(slideshowInterval);
-            slideshowInterval = setInterval(() => {
-                const slides = container.querySelectorAll('.slide');
-                if (slides.length === 0) return;
-                slides[slideshowIndex % slides.length].classList.remove('active');
-                slideshowIndex = (slideshowIndex + 1) % slides.length;
-                slides[slideshowIndex].classList.add('active');
-            }, 3000);
-        }
-
-        function pararSlideshow() {
-            clearInterval(slideshowInterval);
-            slideshowInterval = null;
-        }
-
-        function mostrarSlideshowOuCapa(musicaTocando) {
-            const mainCoverEl = document.getElementById('main-cover');
-            const slideshowEl = document.getElementById('slideshow');
-            if (musicaTocando) {
-                // Mostra capa da música, esconde slideshow
-                mainCoverEl.style.zIndex = '10';
-                mainCoverEl.style.opacity = '1';
-                slideshowEl.style.opacity = '0';
-                pararSlideshow();
-            } else {
-                // Esconde capa, mostra slideshow
-                mainCoverEl.style.opacity = '0';
-                mainCoverEl.style.zIndex = '0';
-                slideshowEl.style.opacity = '1';
-                iniciarSlideshow();
-            }
-        }
-
-        // =============================================
-        // LISTA DE FAIXAS
-        // =============================================
-        function renderizarListaFaixas() {
-            const lista = document.getElementById('lista-faixas');
-            const total = document.getElementById('total-faixas');
-            total.innerText = playlist.length + ' faixas';
-            lista.innerHTML = '';
-
-            if (playlist.length === 0) {
-                lista.innerHTML = '<p class="text-center text-gray-600 text-xs py-8 italic">Nenhuma faixa disponível.</p>';
-                return;
-            }
-
-            playlist.forEach((m, i) => {
-                const isAtual = i === indexMusica && audio.src;
-                const div = document.createElement('div');
-                div.id = 'faixa-' + i;
-                div.className = 'faixa-item px-5 py-4 flex items-center gap-4 cursor-pointer' + (isAtual ? ' playing' : '');
-                div.onclick = () => {
-                    renderizarMusica(i);
-                    audio.play();
-                    playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                    playBtn.classList.add('animate-pulse-pink');
-                    mostrarSlideshowOuCapa(true);
-                    atualizarFaixaAtiva(i);
-                };
-                div.innerHTML = `
-                    <div class="w-6 flex items-center justify-center flex-shrink-0">
-                        <span class="faixa-num text-[10px] text-gray-600 font-black">${i + 1}</span>
-                        <div class="faixa-eq">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
-                    <img src="${m.capa || 'assets/default.png'}" class="w-10 h-10 rounded-xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
-                    <div class="flex-1 overflow-hidden">
-                        <p class="text-xs font-black text-white truncate">${m.titulo}</p>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
-                    </div>
-                    <span class="text-[9px] text-gray-600 font-bold uppercase flex-shrink-0">${m.tipo || 'Single'}</span>
-                `;
-                lista.appendChild(div);
-            });
-        }
-
-        function atualizarFaixaAtiva(idx) {
-            document.querySelectorAll('.faixa-item').forEach((el, i) => {
-                el.classList.toggle('playing', i === idx);
-            });
-        }
-
-        // =============================================
-        // OVERRIDE: quando playlist carrega do Firebase
-        // =============================================
-        // Aguarda o script.js terminar de configurar o Firebase listener
-        // e depois sobrepõe o comportamento do onSnapshot
-        document.addEventListener('DOMContentLoaded', () => {
-            // Iniciar slideshow após um delay (espera playlist carregar)
-            setTimeout(() => {
-                if (!audio.src || audio.paused) {
-                    mostrarSlideshowOuCapa(false);
-                }
-            }, 1500);
-        });
-
-        // Monitorar estado do áudio para alternar slideshow <-> capa
-        document.addEventListener('DOMContentLoaded', () => {
-            const audioEl = document.getElementById('main-audio');
-
-            audioEl.addEventListener('play', () => mostrarSlideshowOuCapa(true));
-            audioEl.addEventListener('pause', () => mostrarSlideshowOuCapa(false));
-            audioEl.addEventListener('ended', () => mostrarSlideshowOuCapa(false));
-        });
-
-        // Hook: quando a playlist é carregada pelo script.js, renderizar lista e slideshow
-        // Usamos MutationObserver no título para detectar quando a música carrega
-        const titleEl = document.getElementById('main-title');
-        const listObserver = new MutationObserver(() => {
-            renderizarListaFaixas();
-            if (!audio || audio.paused) {
-                mostrarSlideshowOuCapa(false);
-            }
-        });
-        // Observar mudanças no título (indica que playlist foi carregada)
-        if (titleEl) listObserver.observe(titleEl, { childList: true, characterData: true, subtree: true });
-
-        // Override da função renderizarMusica para actualizar lista
-        document.addEventListener('DOMContentLoaded', () => {
-            const originalRenderizar = window.renderizarMusica;
-            if (typeof originalRenderizar === 'function') {
+    <script src="index-page.js"></script>
+</body>
+</html>
