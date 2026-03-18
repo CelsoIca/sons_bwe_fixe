@@ -6,7 +6,7 @@
     <title>Painel General | Sons Bwé Fixe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-[#020617] text-white flex h-screen overflow-hidden">
 
@@ -15,7 +15,7 @@
         <i class="fa-solid fa-triangle-exclamation text-7xl text-white mb-6 animate-bounce"></i>
         <h1 class="text-4xl font-black mb-2">ACESSO RESTRITO</h1>
         <p class="mb-8 text-white/80">Área exclusiva para o General.</p>
-        <button onclick="window.location.href='../index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black hover:scale-105 transition">VOLTAR</button>
+        <button onclick="window.location.href='index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black hover:scale-105 transition">VOLTAR</button>
     </div>
 
     <!-- Conteúdo Admin (escondido até verificação) -->
@@ -58,7 +58,7 @@
             </nav>
 
             <div class="pt-6 border-t border-white/5 space-y-3">
-                <a href="../index.html" class="flex items-center gap-4 p-4 text-gray-600 hover:text-white transition text-xs font-bold uppercase">
+                <a href="index.html" class="flex items-center gap-4 p-4 text-gray-600 hover:text-white transition text-xs font-bold uppercase">
                     <i class="fa-solid fa-house"></i> Voltar à Home
                 </a>
                 <button onclick="logout()" class="w-full bg-red-500/10 text-red-500 p-4 rounded-2xl font-bold text-xs hover:bg-red-500/20 transition">
@@ -106,7 +106,52 @@
 
                 <!-- Lista de Músicas -->
                 <h3 class="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest">Músicas Publicadas</h3>
-                <div id="adm-lista-musicas" class="grid md:grid-cols-2 gap-4"></div>
+                <div id="adm-lista-musicas" class="grid md:grid-cols-2 gap-4 mb-12"></div>
+
+                <!-- GESTÃO DE CATEGORIAS -->
+                <div class="border-t border-white/5 pt-10">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-widest">Gestão de Categorias</h3>
+                            <p class="text-[9px] text-gray-700 mt-1">As categorias aparecem no menu Explorar e nas páginas de categoria</p>
+                        </div>
+                    </div>
+
+                    <!-- Inicializar categorias padrão (só precisas fazer isto uma vez) -->
+                    <div id="seed-banner" class="glass p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 mb-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-black text-yellow-400">Primeira vez?</p>
+                            <p class="text-[9px] text-gray-500">Clica para criar as categorias padrão (Album, EP, Single, Mixtape)</p>
+                        </div>
+                        <button onclick="seedCategorias()" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-4 py-2 rounded-xl text-xs font-black hover:bg-yellow-500/30 transition flex-shrink-0 ml-4">
+                            INICIALIZAR
+                        </button>
+                    </div>
+
+                    <!-- Criar nova categoria -->
+                    <div class="glass p-6 rounded-[2rem] border border-white/10 mb-6">
+                        <h4 class="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest">Nova Categoria</h4>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <input type="text" id="nova-cat-nome" placeholder="Nome (ex: Single)" class="bg-white/5 border border-white/5 p-3 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
+                            <select id="nova-cat-icone" class="bg-[#020617] border border-white/5 p-3 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition text-sm">
+                                <option value="fa-bolt">⚡ Bolt</option>
+                                <option value="fa-compact-disc">💿 Disc</option>
+                                <option value="fa-layer-group">📚 Layer</option>
+                                <option value="fa-cassette-tape">📼 Cassette</option>
+                                <option value="fa-music">🎵 Music</option>
+                                <option value="fa-microphone">🎤 Mic</option>
+                                <option value="fa-star">⭐ Star</option>
+                                <option value="fa-fire">🔥 Fire</option>
+                            </select>
+                            <button onclick="criarCategoria()" class="bg-[#EF3C54] py-3 px-6 rounded-2xl font-black text-xs hover:scale-[1.02] transition">
+                                <i class="fa-solid fa-plus mr-2"></i>CRIAR
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de categorias -->
+                    <div id="adm-lista-categorias" class="grid md:grid-cols-2 gap-3"></div>
+                </div>
             </section>
 
             <!-- Aba: Utilizadores -->
@@ -164,8 +209,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="../script.js"></script>
-    <script src="../admin.js"></script>
+    <script src="script.js"></script>
+    <script src="admin.js"></script>
 
     <script>
         // --- CONTROLO DE ABAS ---
@@ -177,7 +222,7 @@
             document.getElementById('aba-' + nome).classList.remove('hidden');
             document.getElementById('btn-' + nome).classList.add('bg-white/5', 'text-white');
             if (nome === 'usuarios') carregarUsuariosAdmin();
-            if (nome === 'musicas') carregarMusicasAdmin();
+            if (nome === 'musicas') { carregarMusicasAdmin(); carregarCategoriasAdmin(); }
             if (nome === 'parcerias') carregarParcerias();
         }
 
