@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel General | Sons Bwé Fixe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="bg-[#020617] text-white flex h-screen overflow-hidden">
+
+    <!-- Overlay de Acesso Negado -->
+    <div id="error-overlay" class="fixed inset-0 z-[1000] bg-[#EF3C54] flex flex-col items-center justify-center text-center p-6 hidden">
+        <i class="fa-solid fa-triangle-exclamation text-7xl text-white mb-6 animate-bounce"></i>
+        <h1 class="text-4xl font-black mb-2">ACESSO RESTRITO</h1>
+        <p class="mb-8 text-white/80">Área exclusiva para o General.</p>
+        <button onclick="window.location.href='../index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black hover:scale-105 transition">VOLTAR</button>
+    </div>
+
+    <!-- Conteúdo Admin (escondido até verificação) -->
+    <div id="admin-content" class="hidden w-full flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-72 bg-[#020617] border-r border-white/5 flex flex-col p-6 h-full z-[100] flex-shrink-0">
+            <div class="mb-10 px-2 text-center">
+                <h1 class="text-xl font-black uppercase text-[#EF3C54]">Sons Bwé Fixe</h1>
+                <p class="text-[9px] text-gray-600 font-bold uppercase tracking-[0.3em]">Painel do General</p>
+            </div>
+
+            <!-- Stats Rápidas -->
+            <div class="grid grid-cols-3 gap-2 mb-8">
+                <div class="glass rounded-xl p-3 text-center border border-white/5">
+                    <p id="stat-musicas" class="text-lg font-black text-[#EF3C54]">—</p>
+                    <p class="text-[7px] text-gray-600 uppercase font-bold">Músicas</p>
+                </div>
+                <div class="glass rounded-xl p-3 text-center border border-white/5">
+                    <p id="stat-users" class="text-lg font-black text-[#2E5EBE]">—</p>
+                    <p class="text-[7px] text-gray-600 uppercase font-bold">Users</p>
+                </div>
+                <div class="glass rounded-xl p-3 text-center border border-white/5 relative">
+                    <p id="stat-total" class="text-lg font-black text-orange-400">—</p>
+                    <p class="text-[7px] text-gray-600 uppercase font-bold">Msgs</p>
+                    <span id="notif-count" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-[#EF3C54] rounded-full text-[7px] font-black flex items-center justify-center"></span>
+                </div>
+            </div>
+
+            <nav class="space-y-2 flex-1">
+                <button onclick="abrirAba('musicas')" id="btn-musicas" class="aba-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition text-gray-400 font-bold text-sm text-left">
+                    <i class="fa-solid fa-music text-[#EF3C54]"></i> Músicas
+                </button>
+                <button onclick="abrirAba('usuarios')" id="btn-usuarios" class="aba-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition text-gray-400 font-bold text-sm text-left">
+                    <i class="fa-solid fa-users text-[#2E5EBE]"></i> Utilizadores
+                </button>
+                <button onclick="abrirAba('parcerias')" id="btn-parcerias" class="aba-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition text-gray-400 font-bold text-sm text-left">
+                    <i class="fa-solid fa-handshake text-orange-400"></i> Parcerias
+                </button>
+            </nav>
+
+            <div class="pt-6 border-t border-white/5 space-y-3">
+                <a href="../index.html" class="flex items-center gap-4 p-4 text-gray-600 hover:text-white transition text-xs font-bold uppercase">
+                    <i class="fa-solid fa-house"></i> Voltar à Home
+                </a>
+                <button onclick="logout()" class="w-full bg-red-500/10 text-red-500 p-4 rounded-2xl font-bold text-xs hover:bg-red-500/20 transition">
+                    <i class="fa-solid fa-power-off mr-2"></i>SAIR
+                </button>
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 overflow-y-auto p-10 bg-[#03081a]">
+
+            <!-- Aba: Músicas -->
+            <section id="aba-musicas" class="aba-content hidden">
+                <h2 class="text-2xl font-black italic mb-8">Gestão de Músicas</h2>
+
+                <!-- Formulário Publicar -->
+                <div class="glass p-8 rounded-[2.5rem] border border-white/10 mb-10">
+                    <h3 class="text-[10px] font-black uppercase text-gray-500 mb-6 tracking-widest">Publicar Nova Música</h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input type="text" id="adm-titulo" placeholder="Título da música" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
+                        <input type="text" id="adm-artista" placeholder="Nome do Artista" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input type="url" id="adm-url" placeholder="Link direto do MP3 (https://...)" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-xs">
+                        <select id="adm-tipo" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition">
+                            <option value="Single">Single</option>
+                            <option value="Album">Album</option>
+                            <option value="EP">EP</option>
+                            <option value="Mixtape">Mixtape</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-[10px] text-gray-500 uppercase mb-2 font-bold">Capa da Música (Opcional)</label>
+                        <div class="glass border border-dashed border-white/10 rounded-2xl p-4 hover:border-[#EF3C54]/30 transition flex items-center gap-4 cursor-pointer relative">
+                            <i class="fa-solid fa-image text-gray-600 text-xl"></i>
+                            <span id="capa-filename" class="text-xs text-gray-500">Escolher ficheiro de imagem...</span>
+                            <input type="file" id="adm-ficheiro-capa" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
+                                onchange="document.getElementById('capa-filename').innerText = this.files[0]?.name || 'Escolher ficheiro...'">
+                        </div>
+                    </div>
+                    <button onclick="publicarMusicaAdmin()" id="btn-publicar" class="w-full bg-[#EF3C54] py-4 rounded-2xl font-black hover:scale-[1.02] active:scale-95 transition shadow-lg shadow-pink-500/20 text-sm tracking-widest">
+                        <i class="fa-solid fa-rocket mr-2"></i>PUBLICAR NO PLAYER
+                    </button>
+                </div>
+
+                <!-- Lista de Músicas -->
+                <h3 class="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest">Músicas Publicadas</h3>
+                <div id="adm-lista-musicas" class="grid md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <!-- Aba: Utilizadores -->
+            <section id="aba-usuarios" class="aba-content hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-black italic">Gestão de Utilizadores</h2>
+                    <button onclick="document.getElementById('modal-user').classList.remove('hidden')" class="bg-[#2E5EBE] px-6 py-3 rounded-xl font-bold text-xs hover:bg-blue-500 transition">
+                        <i class="fa-solid fa-plus mr-2"></i>NOVO UTILIZADOR
+                    </button>
+                </div>
+                <div class="glass rounded-[2rem] border border-white/5 overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-white/5 text-gray-500 uppercase text-[10px] font-black">
+                            <tr>
+                                <th class="p-5">Utilizador</th>
+                                <th class="p-5">Status</th>
+                                <th class="p-5">Cargo</th>
+                                <th class="p-5 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-usuarios-admin"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Aba: Parcerias -->
+            <section id="aba-parcerias" class="aba-content hidden">
+                <h2 class="text-2xl font-black italic mb-8">Propostas de Parceria</h2>
+                <div id="adm-lista-parcerias" class="grid md:grid-cols-2 gap-4"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal Criar Utilizador -->
+    <div id="modal-user" class="fixed inset-0 z-[600] bg-black/90 backdrop-blur-md flex items-center justify-center hidden p-6">
+        <div class="glass w-full max-w-md p-10 rounded-[3rem] border border-white/10 relative">
+            <button onclick="document.getElementById('modal-user').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h2 class="text-xl font-black mb-6">Novo Utilizador</h2>
+            <div class="space-y-4">
+                <input type="text" id="new-user-nome" placeholder="Nome" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                <input type="email" id="new-user-email" placeholder="Email" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                <input type="password" id="new-user-pass" placeholder="Senha (mínimo 6 caracteres)" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                <select id="new-user-role" class="w-full bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-blue-500 transition">
+                    <option value="user">Ouvinte (User)</option>
+                    <option value="admin">Administrador (General)</option>
+                </select>
+                <button onclick="confirmarCriarUsuario()" id="btn-conf-user" class="w-full bg-[#2E5EBE] py-4 rounded-2xl font-black hover:bg-blue-500 transition">CRIAR CONTA</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="../script.js"></script>
+    <script src="../admin.js"></script>
+
+    <script>
+        // --- CONTROLO DE ABAS ---
+        function abrirAba(nome) {
+            document.querySelectorAll('.aba-content').forEach(a => a.classList.add('hidden'));
+            document.querySelectorAll('.aba-btn').forEach(b => {
+                b.classList.remove('bg-white/5', 'text-white', 'sidebar-link-active');
+            });
+            document.getElementById('aba-' + nome).classList.remove('hidden');
+            document.getElementById('btn-' + nome).classList.add('bg-white/5', 'text-white');
+            if (nome === 'usuarios') carregarUsuariosAdmin();
+            if (nome === 'musicas') carregarMusicasAdmin();
+            if (nome === 'parcerias') carregarParcerias();
+        }
+
+        // --- GESTÃO DE UTILIZADORES ---
+        function carregarUsuariosAdmin() {
+            db.collection("users").onSnapshot(snap => {
+                const lista = document.getElementById('lista-usuarios-admin');
+                lista.innerHTML = "";
+                if (snap.empty) {
+                    lista.innerHTML = "<tr><td colspan='4' class='p-6 text-center text-gray-600 italic'>Nenhum utilizador encontrado.</td></tr>";
+                    return;
+                }
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    const ativo = u.ativo !== false;
+                    lista.innerHTML += `
+                        <tr class="border-t border-white/5 hover:bg-white/5 transition">
+                            <td class="p-5">
+                                <div class="font-bold text-sm">${u.nome || 'Sem nome'}</div>
+                                <div class="text-[9px] text-gray-500">${u.email || ''}</div>
+                            </td>
+                            <td class="p-5">
+                                <span class="text-[10px] font-black uppercase px-3 py-1 rounded-full ${ativo ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}">
+                                    ${ativo ? 'Ativo' : 'Banido'}
+                                </span>
+                            </td>
+                            <td class="p-5 text-gray-400 text-xs font-bold uppercase">${u.role || 'user'}</td>
+                            <td class="p-5 text-right space-x-2">
+                                <button onclick="toggleUserStatus('${doc.id}', ${ativo})" class="w-8 h-8 rounded-lg ${ativo ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'} transition inline-flex items-center justify-center" title="${ativo ? 'Banir' : 'Ativar'}">
+                                    <i class="fa-solid fa-power-off text-xs"></i>
+                                </button>
+                                <button onclick="excluirUsuario('${doc.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition inline-flex items-center justify-center" title="Eliminar">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+            });
+        }
+
+        async function confirmarCriarUsuario() {
+            const email = document.getElementById('new-user-email').value.trim();
+            const pass = document.getElementById('new-user-pass').value.trim();
+            const nome = document.getElementById('new-user-nome').value.trim();
+            const role = document.getElementById('new-user-role').value;
+            const btn = document.getElementById('btn-conf-user');
+
+            if (!nome || !email || !pass) return alert("Preenche todos os campos!");
+
+            btn.innerText = "A CRIAR...";
+            btn.disabled = true;
+
+            try {
+                // Criação via Firebase Auth (nota: cria sessão secundária)
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.collection("users").doc(cred.user.uid).set({
+                    nome, email, role, ativo: true,
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Utilizador criado com sucesso!");
+                document.getElementById('modal-user').classList.add('hidden');
+                document.getElementById('new-user-nome').value = '';
+                document.getElementById('new-user-email').value = '';
+                document.getElementById('new-user-pass').value = '';
+            } catch (e) {
+                alert("Erro: " + e.message);
+            } finally {
+                btn.innerText = "CRIAR CONTA";
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleUserStatus(id, status) {
+            await db.collection("users").doc(id).update({ ativo: !status });
+        }
+
+        async function excluirUsuario(id) {
+            if (confirm("Eliminar conta definitivamente? Esta ação é irreversível.")) {
+                await db.collection("users").doc(id).delete();
+            }
+        }
+    </script>
+</body>
+</html>
