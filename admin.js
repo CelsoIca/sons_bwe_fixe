@@ -1,65 +1,71 @@
 // ==========================================
 // PAINEL DO GENERAL — admin.js
-// Carregado APÓS script.js (que já tem Firebase init)
 // ==========================================
 
-// Aguarda o DOM estar pronto
-document.addEventListener('DOMContentLoaded', () => {
+// Mapa de ícones disponíveis
+const ICONES_DISPONIVEIS = {
+    'fa-bolt':          '⚡ Bolt',
+    'fa-compact-disc':  '💿 Compact Disc',
+    'fa-layer-group':   '📚 Layer Group',
+    'fa-cassette-tape': '📼 Cassette',
+    'fa-music':         '🎵 Music Note',
+    'fa-microphone':    '🎤 Microphone',
+    'fa-star':          '⭐ Star',
+    'fa-fire':          '🔥 Fire',
+    'fa-headphones':    '🎧 Headphones',
+    'fa-guitar':        '🎸 Guitar',
+    'fa-drum':          '🥁 Drum',
+    'fa-record-vinyl':  '🎵 Vinyl',
+    'fa-radio':         '📻 Radio',
+};
 
-    // 1. VERIFICAÇÃO DE ACESSO (único listener de auth para esta página)
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = 'login.html';
+// ==========================================
+// 1. ARRANQUE — verificar acesso admin
+// ==========================================
+auth.onAuthStateChanged(async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    try {
+        const userDoc  = await db.collection("users").doc(user.uid).get();
+        const userData = userDoc.data();
+
+        if (!userData || userData.ativo === false) {
+            alert("ACESSO NEGADO: Conta suspensa.");
+            await auth.signOut();
+            window.location.href = 'index.html';
             return;
         }
 
-        try {
-            const userDoc = await db.collection("users").doc(user.uid).get();
-            const userData = userDoc.data();
+        if (userData.role === 'admin') {
+            document.getElementById('admin-content').classList.remove('hidden');
+            const err = document.getElementById('error-overlay');
+            if (err) err.classList.add('hidden');
 
-            if (!userData || userData.ativo === false) {
-                alert("ACESSO NEGADO: Conta suspensa.");
-                await auth.signOut();
-                window.location.href = 'index.html';
-                return;
-            }
-
-            if (userData.role === 'admin') {
-                // Mostrar o conteúdo admin
-                document.getElementById('admin-content').classList.remove('hidden');
-                const errOverlay = document.getElementById('error-overlay');
-                if (errOverlay) errOverlay.classList.add('hidden');
-
-                // Iniciar painel
-                carregarEstatisticas();
-                monitorarNotificacoes();
-                carregarCategoriasSelect();
-                abrirAba('musicas');
-            } else {
-                // Não é admin — mostrar erro
-                const errOverlay = document.getElementById('error-overlay');
-                if (errOverlay) errOverlay.classList.remove('hidden');
-            }
-        } catch (e) {
-            console.error("Erro ao verificar acesso:", e);
-            const errOverlay = document.getElementById('error-overlay');
-            if (errOverlay) errOverlay.classList.remove('hidden');
+            carregarEstatisticas();
+            monitorarNotificacoes();
+            carregarCategoriasSelect();
+            abrirAba('musicas');
+            iniciarPreviewCategoria();
+        } else {
+            const err = document.getElementById('error-overlay');
+            if (err) err.classList.remove('hidden');
         }
-    });
-
+    } catch (e) {
+        console.error("Erro ao verificar acesso:", e);
+    }
 });
 
 // ==========================================
 // 2. PUBLICAR MÚSICA
 // ==========================================
 async function publicarMusicaAdmin() {
-    const btn = document.getElementById('btn-publicar');
-    const titulo = document.getElementById('adm-titulo').value.trim();
+    const btn     = document.getElementById('btn-publicar');
+    const titulo  = document.getElementById('adm-titulo').value.trim();
     const artista = document.getElementById('adm-artista').value.trim();
-    const urlMp3 = document.getElementById('adm-url').value.trim();
-    const tipo = document.getElementById('adm-tipo').value;
+    const urlMp3  = document.getElementById('adm-url').value.trim();
+    const tipo    = document.getElementById('adm-tipo').value;
     const inputCapa = document.getElementById('adm-ficheiro-capa');
-    const file = inputCapa ? inputCapa.files[0] : null;
+    const file    = inputCapa ? inputCapa.files[0] : null;
 
     if (!titulo || !artista || !urlMp3) {
         return alert("Preenche o Título, Artista e o Link do Áudio!");
@@ -70,36 +76,36 @@ async function publicarMusicaAdmin() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A PROCESSAR...';
 
     let urlFinalCapa = "";
-
     try {
         if (file) {
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CARREGAR CAPA...';
             urlFinalCapa = await uploadParaImgBB(file);
             if (!urlFinalCapa) {
-                alert("Erro no upload da capa. Tenta de novo.");
+                alert("Erro no upload da capa.");
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
                 return;
             }
         }
 
         await db.collection("playlist").add({
-            titulo, artista,
-            url: urlMp3,
-            capa: urlFinalCapa,
-            tipo, oculto: false,
+            titulo, artista, url: urlMp3,
+            capa: urlFinalCapa, tipo, oculto: false,
             ordem: Date.now(),
             dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        alert("✅ Música publicada com sucesso!");
-        document.getElementById('adm-titulo').value = '';
-        document.getElementById('adm-artista').value = '';
-        document.getElementById('adm-url').value = '';
+        alert("✅ Música publicada!");
+        document.getElementById('adm-titulo').value    = '';
+        document.getElementById('adm-artista').value   = '';
+        document.getElementById('adm-url').value       = '';
+        const capaNome = document.getElementById('capa-filename');
+        if (capaNome) capaNome.innerText = 'Escolher ficheiro de imagem...';
         if (inputCapa) inputCapa.value = '';
-        document.getElementById('capa-filename').innerText = 'Escolher ficheiro de imagem...';
-
+        carregarMusicasAdmin();
     } catch (e) {
-        console.error("Erro ao publicar:", e);
-        alert("❌ Erro ao salvar. Verifica a conexão.");
+        console.error(e);
+        alert("Erro ao salvar. Verifica a conexão.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = textoOriginal;
@@ -163,7 +169,7 @@ function carregarParcerias() {
         }
         snap.forEach(doc => {
             const p = doc.data();
-            const isLido = p.lido === true;
+            const isLido   = p.lido === true;
             const dataEnvio = p.data ? p.data.toDate().toLocaleString('pt-PT') : '—';
             lista.innerHTML += `
                 <div class="glass p-6 rounded-[2rem] border ${isLido ? 'border-white/5 opacity-60' : 'border-white/10 shadow-lg'} flex flex-col transition-all">
@@ -171,7 +177,7 @@ function carregarParcerias() {
                         <span class="text-[9px] font-black uppercase px-3 py-1 rounded-full bg-blue-500/20 text-blue-400">${p.assunto || 'Parceria'}</span>
                         <div class="flex items-center gap-2">
                             ${!isLido ? '<span class="text-[8px] text-[#EF3C54] font-black animate-pulse">● NOVO</span>' : ''}
-                            <button onclick="toggleLido('${doc.id}', ${isLido})" class="text-xl ${isLido ? 'text-blue-500' : 'text-gray-600'} hover:scale-110 transition" title="Marcar lido">
+                            <button onclick="toggleLido('${doc.id}', ${isLido})" class="text-xl ${isLido ? 'text-blue-500' : 'text-gray-600'} hover:scale-110 transition">
                                 <i class="fa-solid ${isLido ? 'fa-circle-check' : 'fa-circle'}"></i>
                             </button>
                         </div>
@@ -223,57 +229,45 @@ function carregarEstatisticas() {
 }
 
 // ==========================================
-// 6. GESTÃO DE CATEGORIAS — completo
+// 6. GESTÃO DE CATEGORIAS
 // ==========================================
 
-const ICONES_DISPONIVEIS = {
-    'fa-bolt':          '⚡ Bolt',
-    'fa-compact-disc':  '💿 Compact Disc',
-    'fa-layer-group':   '📚 Layer Group',
-    'fa-cassette-tape': '📼 Cassette',
-    'fa-music':         '🎵 Music Note',
-    'fa-microphone':    '🎤 Microphone',
-    'fa-star':          '⭐ Star',
-    'fa-fire':          '🔥 Fire',
-    'fa-headphones':    '🎧 Headphones',
-    'fa-guitar':        '🎸 Guitar',
-    'fa-drum':          '🥁 Drum',
-    'fa-record-vinyl':  '🎵 Vinyl',
-    'fa-radio':         '📻 Radio',
-};
-
-// Feedback toast em vez de alert()
-function catToast(msg, tipo = 'ok') {
+// Toast de feedback (sem alert())
+function catToast(msg, tipo) {
     const el = document.getElementById('cat-toast');
     if (!el) return;
-    el.className = `mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center transition-all ${tipo === 'ok' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`;
+    const isErro = tipo === 'erro';
+    el.className = 'mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center '
+        + (isErro
+            ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20');
     el.innerText = msg;
     el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 3000);
+    setTimeout(() => el.classList.add('hidden'), 3500);
 }
 
-// Preview em tempo real do ícone + nome ao preencher o formulário
-document.addEventListener('DOMContentLoaded', () => {
-    const nomeInput  = document.getElementById('nova-cat-nome');
+// Preview em tempo real do ícone + nome
+function iniciarPreviewCategoria() {
+    const nomeInput   = document.getElementById('nova-cat-nome');
     const iconeSelect = document.getElementById('nova-cat-icone');
     const previewIcon = document.getElementById('preview-icone');
     const previewNome = document.getElementById('preview-nome');
+    if (!nomeInput || !iconeSelect) return;
 
-    function actualizarPreview() {
-        if (previewIcon) previewIcon.className = `fa-solid ${iconeSelect?.value || 'fa-bolt'} text-[#EF3C54] text-sm`;
-        if (previewNome) previewNome.innerText = nomeInput?.value.trim() || ICONES_DISPONIVEIS[iconeSelect?.value] || '—';
+    function atualizar() {
+        if (previewIcon) previewIcon.className = `fa-solid ${iconeSelect.value} text-[#EF3C54] text-sm`;
+        if (previewNome) previewNome.innerText  = nomeInput.value.trim() || ICONES_DISPONIVEIS[iconeSelect.value] || '—';
     }
+    nomeInput.addEventListener('input', atualizar);
+    iconeSelect.addEventListener('change', atualizar);
+}
 
-    if (nomeInput)   nomeInput.addEventListener('input', actualizarPreview);
-    if (iconeSelect) iconeSelect.addEventListener('change', actualizarPreview);
-});
-
-// Carregar categorias no select do formulário de música
+// Select de tipo nas músicas — carregado dinamicamente do Firebase
 function carregarCategoriasSelect() {
     const select = document.getElementById('adm-tipo');
     if (!select) return;
     db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
-        const val = select.value;
+        const valAtual = select.value;
         select.innerHTML = '';
         if (snap.empty) {
             ['Single','Album','EP','Mixtape'].forEach(n => {
@@ -282,23 +276,22 @@ function carregarCategoriasSelect() {
         } else {
             snap.forEach(doc => {
                 const cat = doc.data();
-                select.innerHTML += `<option value="${cat.nome}" ${cat.nome === val ? 'selected' : ''}>${cat.nome}</option>`;
+                select.innerHTML += `<option value="${cat.nome}" ${cat.nome === valAtual ? 'selected' : ''}>${cat.nome}</option>`;
             });
         }
     });
 }
 
-// Carregar e listar categorias no painel admin
+// Listar categorias no painel
 function carregarCategoriasAdmin() {
-    const lista = document.getElementById('adm-lista-categorias');
-    const badge = document.getElementById('cat-total-badge');
+    const lista      = document.getElementById('adm-lista-categorias');
+    const badge      = document.getElementById('cat-total-badge');
     const seedBanner = document.getElementById('seed-banner');
     if (!lista) return;
 
     db.collection("categorias").orderBy("ordem").onSnapshot(async snap => {
         lista.innerHTML = '';
 
-        // Mostrar/esconder banner de inicialização
         if (seedBanner) seedBanner.classList.toggle('hidden', !snap.empty);
         if (badge) badge.innerText = snap.size + (snap.size === 1 ? ' categoria' : ' categorias');
 
@@ -307,7 +300,7 @@ function carregarCategoriasAdmin() {
             return;
         }
 
-        // Contar músicas por categoria de uma vez
+        // Contar músicas por categoria
         const contagemMap = {};
         const musicasSnap = await db.collection("playlist").get();
         musicasSnap.forEach(d => {
@@ -317,12 +310,11 @@ function carregarCategoriasAdmin() {
 
         const docs = snap.docs;
         docs.forEach((doc, idx) => {
-            const cat = doc.data();
-            const total = contagemMap[cat.nome] || 0;
+            const cat       = doc.data();
+            const total     = contagemMap[cat.nome] || 0;
             const isPrimeira = idx === 0;
             const isUltima   = idx === docs.length - 1;
 
-            // Gerar opções do select de ícone para edição
             const opcoesIcone = Object.entries(ICONES_DISPONIVEIS).map(([val, label]) =>
                 `<option value="${val}" ${val === (cat.icone || 'fa-music') ? 'selected' : ''}>${label}</option>`
             ).join('');
@@ -337,7 +329,7 @@ function carregarCategoriasAdmin() {
                         <i class="fa-solid ${cat.icone || 'fa-music'} text-[#EF3C54]"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <p class="font-black text-sm text-white">${cat.nome}s</p>
                             <span class="text-[8px] font-bold bg-white/5 text-gray-500 px-2 py-0.5 rounded-full">${total} música${total !== 1 ? 's' : ''}</span>
                         </div>
@@ -370,18 +362,18 @@ function carregarCategoriasAdmin() {
                     </div>
                 </div>
 
-                <!-- Modo edição (escondido) -->
+                <!-- Modo edição -->
                 <div id="cat-edit-${doc.id}" class="hidden p-5 bg-white/3 border-t border-white/5">
                     <p class="text-[9px] font-black uppercase text-gray-500 mb-4 tracking-widest">Editar Categoria</p>
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="space-y-1">
-                            <label class="text-[8px] text-gray-600 font-bold uppercase">Nome</label>
+                            <label class="text-[8px] text-gray-600 font-bold uppercase ml-1">Nome</label>
                             <input type="text" id="edit-nome-${doc.id}" value="${cat.nome}"
                                 class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#EF3C54] transition"
                                 onkeydown="if(event.key==='Enter') guardarEdicaoCategoria('${doc.id}')">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[8px] text-gray-600 font-bold uppercase">Ícone</label>
+                            <label class="text-[8px] text-gray-600 font-bold uppercase ml-1">Ícone</label>
                             <select id="edit-icone-${doc.id}"
                                 class="w-full bg-[#020617] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
                                 ${opcoesIcone}
@@ -405,6 +397,7 @@ function carregarCategoriasAdmin() {
     });
 }
 
+// Abrir / fechar modo edição inline
 function abrirEdicaoCategoria(id) {
     document.getElementById(`cat-view-${id}`).classList.add('hidden');
     document.getElementById(`cat-edit-${id}`).classList.remove('hidden');
@@ -416,6 +409,7 @@ function fecharEdicaoCategoria(id) {
     document.getElementById(`cat-edit-${id}`).classList.add('hidden');
 }
 
+// Guardar edição
 async function guardarEdicaoCategoria(id) {
     const novoNome  = document.getElementById(`edit-nome-${id}`).value.trim();
     const novoIcone = document.getElementById(`edit-icone-${id}`).value;
@@ -424,40 +418,60 @@ async function guardarEdicaoCategoria(id) {
         await db.collection("categorias").doc(id).update({ nome: novoNome, icone: novoIcone });
         fecharEdicaoCategoria(id);
         catToast(`"${novoNome}" actualizada com sucesso!`);
-    } catch(e) {
+    } catch (e) {
         catToast('Erro ao guardar. Tenta novamente.', 'erro');
     }
 }
 
+// CRIAR nova categoria — função global, acessível pelo botão no HTML
 async function criarCategoria() {
-    const nome  = document.getElementById('nova-cat-nome').value.trim();
-    const icone = document.getElementById('nova-cat-icone').value;
-    const btn   = document.getElementById('btn-criar-cat');
+    const nomeInput  = document.getElementById('nova-cat-nome');
+    const iconeSelect = document.getElementById('nova-cat-icone');
+    const btn        = document.getElementById('btn-criar-cat');
+
+    const nome  = nomeInput ? nomeInput.value.trim() : '';
+    const icone = iconeSelect ? iconeSelect.value : 'fa-music';
+
     if (!nome) return catToast('Dá um nome à categoria!', 'erro');
 
-    const existe = await db.collection("categorias").where("nome", "==", nome).get();
-    if (!existe.empty) return catToast(`"${nome}" já existe!`, 'erro');
+    // Verificar duplicado
+    try {
+        const existe = await db.collection("categorias").where("nome", "==", nome).get();
+        if (!existe.empty) return catToast(`"${nome}" já existe!`, 'erro');
+    } catch (e) {
+        return catToast('Erro ao verificar. Tenta novamente.', 'erro');
+    }
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CRIAR...';
+    // Bloquear botão
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CRIAR...'; }
+
     try {
         const snap = await db.collection("categorias").orderBy("ordem", "desc").limit(1).get();
         const ordemMax = snap.empty ? 0 : (snap.docs[0].data().ordem || 0);
+
         await db.collection("categorias").add({
-            nome, icone, ordem: ordemMax + 1,
+            nome,
+            icone,
+            ordem: ordemMax + 1,
             criada: firebase.firestore.FieldValue.serverTimestamp()
         });
-        document.getElementById('nova-cat-nome').value = '';
-        document.getElementById('preview-nome').innerText = '—';
-        catToast(`Categoria "${nome}" criada!`);
-    } catch(e) {
-        catToast('Erro ao criar. Tenta novamente.', 'erro');
+
+        // Limpar formulário
+        if (nomeInput)  nomeInput.value  = '';
+        const previewNome = document.getElementById('preview-nome');
+        if (previewNome) previewNome.innerText = '—';
+
+        catToast(`Categoria "${nome}" criada com sucesso!`);
+
+    } catch (e) {
+        console.error("Erro ao criar categoria:", e);
+        catToast('Erro ao criar. Verifica a ligação.', 'erro');
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-plus mr-2"></i>CRIAR CATEGORIA';
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus mr-2"></i>CRIAR CATEGORIA'; }
     }
 }
 
+// Eliminar categoria
 async function eliminarCategoria(id, nome, totalMusicas) {
     const aviso = totalMusicas > 0
         ? `⚠️ Existem ${totalMusicas} música(s) nesta categoria.\nEliminar "${nome}"? As músicas ficam sem categoria visível.`
@@ -466,13 +480,13 @@ async function eliminarCategoria(id, nome, totalMusicas) {
     try {
         await db.collection("categorias").doc(id).delete();
         catToast(`"${nome}" eliminada.`);
-    } catch(e) {
+    } catch (e) {
         catToast('Erro ao eliminar.', 'erro');
     }
 }
 
+// Reordenar (trocar posição com vizinho)
 async function moverCategoria(id, direcao, ordemActual) {
-    // Encontrar o vizinho para trocar a ordem
     const query = direcao === 'up'
         ? db.collection("categorias").where("ordem", "<", ordemActual).orderBy("ordem", "desc").limit(1)
         : db.collection("categorias").where("ordem", ">", ordemActual).orderBy("ordem", "asc").limit(1);
@@ -480,15 +494,16 @@ async function moverCategoria(id, direcao, ordemActual) {
     const snap = await query.get();
     if (snap.empty) return;
 
-    const vizinho = snap.docs[0];
+    const vizinho      = snap.docs[0];
     const ordemVizinho = vizinho.data().ordem;
 
     const batch = db.batch();
-    batch.update(db.collection("categorias").doc(id),       { ordem: ordemVizinho });
-    batch.update(db.collection("categorias").doc(vizinho.id), { ordem: ordemActual });
+    batch.update(db.collection("categorias").doc(id),         { ordem: ordemVizinho });
+    batch.update(db.collection("categorias").doc(vizinho.id), { ordem: ordemActual  });
     await batch.commit();
 }
 
+// Inicializar categorias padrão (seed)
 async function seedCategorias() {
     const snap = await db.collection("categorias").get();
     if (!snap.empty) { catToast('Já existem categorias!', 'erro'); return; }
