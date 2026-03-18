@@ -230,3 +230,16 @@ auth.onAuthStateChanged(async (user) => {
 const sideMenu = document.getElementById('side-menu');
 document.getElementById('open-menu').onclick = () => sideMenu.classList.remove('hidden');
 document.getElementById('close-menu').onclick = () => sideMenu.classList.add('hidden');
+
+async function registarPlay(musicaId) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const statsRef = db.collection("users").doc(user.uid).collection("estatisticas").doc(musicaId);
+    
+    // Incrementa o contador de plays para essa música específica
+    await statsRef.set({
+        plays: firebase.firestore.FieldValue.increment(1),
+        ultimoOuvido: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+}
