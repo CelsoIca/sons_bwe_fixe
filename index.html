@@ -73,34 +73,11 @@
 
             <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
                 <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
-
                 <button onclick="filtrarCategoria('all', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
                     <i class="fa-solid fa-music text-[#2E5EBE]"></i>
                     <span class="text-sm font-bold group-hover:text-white text-gray-400">Tudo</span>
                 </button>
-
-                <a href="categoria.html?tipo=Album" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-compact-disc text-orange-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Albums</span>
-                </a>
-
-                <a href="categoria.html?tipo=EP" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-layer-group text-yellow-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">EPs</span>
-                </a>
-
-                <a href="categoria.html?tipo=Single" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-bolt text-[#EF3C54]"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Singles</span>
-                </a>
-
-                <a href="categoria.html?tipo=Mixtape" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-cassette-tape text-purple-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Mixtapes</span>
-                </a>
-
-                <!-- Categorias extras criadas pelo admin — adicionadas dinamicamente -->
-                <div id="cats-extras"></div>
+                <!-- Categorias carregadas dinamicamente do Firebase pelo index-page.js -->
             </nav>
 
             <div class="mt-auto pt-6 border-t border-white/5">
