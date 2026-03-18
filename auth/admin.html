@@ -239,7 +239,7 @@
 
         // --- 5. PARCERIAS ---
         function carregarParcerias() {
-            db.collection("contactos").orderBy("data", "desc").onSnapshot(snap => {
+            db.collection("contacto").orderBy("data", "desc").onSnapshot(snap => {
                 const list = document.getElementById('adm-lista-parcerias');
                 list.innerHTML = "";
                 snap.forEach(doc => {
