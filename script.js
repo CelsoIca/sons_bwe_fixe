@@ -180,6 +180,52 @@ function logout() {
     auth.signOut().then(() => window.location.reload());
 }
 
+// ==========================================
+// MOTOR DE UPLOAD (IMGBB)
+// ==========================================
+async function uploadParaImgBB(file) {
+    const apiKey = 'TU_API_KEY_AQUI'; // Pega a tua chave em api.imgbb.com
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.data.url; // Retorna o link direto da imagem
+        } else {
+            console.error("Erro ImgBB:", data);
+            return null;
+        }
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        return null;
+    }
+}
+
+// ==========================================
+// VIGIA DE SESSÃO GLOBAL
+// ==========================================
+// Este bloco garante que se o Admin banir alguém, 
+// o utilizador é expulso na hora de qualquer página.
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            if (userData.ativo === false) {
+                alert("🚫 A tua conta foi desativada.");
+                await auth.signOut();
+                window.location.href = 'login.html';
+            }
+        }
+    }
+});
+
 // Menu Navegação Direito
 const sideMenu = document.getElementById('side-menu');
 document.getElementById('open-menu').onclick = () => sideMenu.classList.remove('hidden');
