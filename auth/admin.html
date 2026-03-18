@@ -256,6 +256,73 @@
                 });
             });
         }
+        // Função para alternar entre Lido e Não Lido
+async function toggleLido(id, statusAtual) {
+    try {
+        await db.collection("contactos").doc(id).update({
+            lido: !statusAtual
+        });
+        // O onSnapshot encarrega-se de atualizar a UI automaticamente
+    } catch (e) {
+        console.error("Erro ao atualizar status:", e);
+    }
+}
+
+// Atualização da função de renderização (Modifica a parte do Card)
+function renderizarParcerias(dados) {
+    const list = document.getElementById('adm-lista-parcerias');
+    list.innerHTML = "";
+
+    dados.forEach(p => {
+        const isLido = p.lido === true;
+        const isPagamento = p.assunto === 'pagamento';
+        
+        list.innerHTML += `
+            <div class="glass p-6 rounded-[2rem] border ${isLido ? 'opacity-50 grayscale-[0.5]' : 'border-white/10 shadow-lg shadow-blue-500/5'} 
+                ${isPagamento ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/5'} flex flex-col h-full transition-all duration-300">
+                
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[9px] font-black uppercase px-3 py-1 rounded-full ${isPagamento ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}">
+                            ${p.assunto || 'Geral'}
+                        </span>
+                        ${!isLido ? '<span class="text-[8px] text-[#EF3C54] font-black animate-pulse ml-1">● NOVO</span>' : ''}
+                    </div>
+                    <button onclick="toggleLido('${p.id}', ${isLido})" class="text-[18px] ${isLido ? 'text-blue-500' : 'text-gray-600'} hover:scale-110 transition">
+                        <i class="fa-solid ${isLido ? 'fa-circle-check' : 'fa-circle'}"></i>
+                    </button>
+                </div>
+
+                <div class="flex-1 cursor-pointer" onclick="toggleLido('${p.id}', ${isLido})">
+                    <h4 class="font-black text-base ${isLido ? 'text-gray-400' : 'text-white'}">${p.nome}</h4>
+                    <p class="text-[10px] text-gray-500 mb-3">${p.email}</p>
+                    
+                    <div class="bg-black/20 p-4 rounded-xl mb-4 border border-white/5">
+                        <p class="text-xs ${isLido ? 'text-gray-500' : 'text-gray-300'} leading-relaxed italic line-clamp-3 hover:line-clamp-none transition-all">
+                            "${p.descricao || p.mensagem || 'Sem descrição.'}"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+                    <div class="flex gap-2">
+                        ${p.anexo || p.anexoUrl ? `
+                            <a href="${p.anexo || p.anexoUrl}" target="_blank" class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition">
+                                <i class="fa-solid fa-file-invoice-dollar text-xs"></i>
+                            </a>
+                        ` : ''}
+                        <a href="mailto:${p.email}" class="w-8 h-8 rounded-lg bg-white/5 text-gray-400 flex items-center justify-center hover:bg-white/10 transition">
+                            <i class="fa-solid fa-reply text-xs"></i>
+                        </a>
+                    </div>
+                    
+                    <button onclick="apagarParceria('${p.id}')" class="text-gray-700 hover:text-red-500 transition">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            </div>`;
+    });
+}
     </script>
 </body>
 </html>
