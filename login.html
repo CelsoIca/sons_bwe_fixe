@@ -6,7 +6,7 @@
     <title>Login | Sons Bwé Fixe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-[#020617] flex items-center justify-center min-h-screen p-6 font-sans">
 
@@ -35,14 +35,20 @@
             ENTRAR
         </button>
 
-        <div class="mt-8 pt-6 border-t border-white/5">
+        <div id="recuperar-link" class="mt-3 text-center">
+            <a href="recuperar.html" class="text-[9px] text-gray-600 hover:text-[#EF3C54] transition font-bold uppercase tracking-widest">
+                Esqueceste a palavra-passe?
+            </a>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-white/5">
             <p id="toggle-text" class="text-[10px] text-gray-500 font-bold uppercase mb-2">Ainda não tens conta?</p>
             <button id="toggle-auth" class="text-xs text-[#2E5EBE] uppercase font-black hover:underline tracking-widest">
                 Criar Conta Agora
             </button>
         </div>
 
-        <a href="../index.html" class="inline-block mt-8 text-[9px] text-gray-600 font-bold uppercase hover:text-white transition">
+        <a href="index.html" class="inline-block mt-8 text-[9px] text-gray-600 font-bold uppercase hover:text-white transition">
             <i class="fa-solid fa-arrow-left mr-1"></i> Voltar à Home
         </a>
     </div>
@@ -51,7 +57,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
-    <script src="../script.js"></script>
+    <script src="script.js"></script>
 
     <script>
         const authBtn = document.getElementById('auth-btn');
@@ -68,11 +74,15 @@
             authBtn.innerText = isLogin ? "CADASTRAR" : "ENTRAR";
             toggleBtn.innerText = isLogin ? "Já tenho conta" : "Criar Conta Agora";
             toggleText.innerText = isLogin ? "Já fazes parte da tropa?" : "Ainda não tens conta?";
-            
+
+            const recuperarLink = document.getElementById('recuperar-link');
+
             if (isLogin) {
                 nameField.classList.remove('hidden');
+                if (recuperarLink) recuperarLink.classList.add('hidden');
             } else {
                 nameField.classList.add('hidden');
+                if (recuperarLink) recuperarLink.classList.remove('hidden');
             }
         };
 
@@ -104,7 +114,7 @@
                         return;
                     }
 
-                    window.location.href = "../index.html";
+                    window.location.href = "index.html";
 
                 } else {
                     // --- TENTATIVA DE CADASTRO ---
@@ -118,12 +128,12 @@
                         role: 'user',       // Sempre começa como user
                         ativo: true,        // Sempre começa ativo
                         dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
-                        fotoUrl: "../assets/default-user.png", // Foto padrão
+                        fotoUrl: "assets/default-user.png", // Foto padrão
                         endereco: ""
                     });
 
                     alert("🎉 Bem-vindo à Sons Bwé Fixe!");
-                    window.location.href = "../index.html";
+                    window.location.href = "index.html";
                 }
             } catch (error) {
                 console.error(error);
