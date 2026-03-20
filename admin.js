@@ -81,6 +81,9 @@ async function publicarMusicaAdmin() {
     if (!titulo || !artista || !urlMp3) {
         return showAdminToast("Preenche o Título, Artista e o Link do Áudio!", "erro");
     }
+    if (!tipo) {
+        return showAdminToast("Selecciona uma categoria para esta música!", "erro");
+    }
 
     const textoOriginal = btn.innerHTML;
     btn.disabled = true;
@@ -142,7 +145,13 @@ function carregarMusicasAdmin() {
                     <div class="flex-1 overflow-hidden">
                         <h4 class="font-black text-sm text-white truncate">${m.titulo}</h4>
                         <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
-                        <span class="text-[8px] font-black ${m.oculto ? 'text-red-400' : 'text-emerald-400'} uppercase">${m.oculto ? 'OCULTO' : 'VISÍVEL'} · ${m.tipo || 'Single'}</span>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <span class="text-[8px] font-black ${m.oculto ? 'text-red-400' : 'text-emerald-400'} uppercase">${m.oculto ? 'OCULTO' : 'VISÍVEL'}</span>
+                            <a href="categoria.html?tipo=${encodeURIComponent(m.tipo || 'Single')}" target="_blank"
+                               class="text-[8px] font-black text-[#2E5EBE] hover:text-blue-400 uppercase hover:underline transition">
+                               ${m.tipo || 'Single'} ↗
+                            </a>
+                        </div>
                     </div>
                     <div class="flex flex-col gap-2">
                         <button onclick="toggleOcultarMusica('${doc.id}', ${m.oculto})" class="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition" title="${m.oculto ? 'Mostrar' : 'Ocultar'}">
@@ -277,12 +286,20 @@ function iniciarPreviewCategoria() {
 function carregarCategoriasSelect() {
     const select = document.getElementById('adm-tipo');
     if (!select) return;
+
+    // Preencher imediatamente com fallback (enquanto Firebase carrega)
+    const FALLBACK = ['Album', 'EP', 'Single', 'Mixtape'];
+    select.innerHTML = FALLBACK.map(n => `<option value="${n}">${n}</option>`).join('');
+
+    // Substituir com dados reais do Firebase em tempo real
     db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
         const valAtual = select.value;
         select.innerHTML = '';
+
         if (snap.empty) {
-            ['Single','Album','EP','Mixtape'].forEach(n => {
-                select.innerHTML += `<option value="${n}">${n}</option>`;
+            // Firebase vazio — usar fallback
+            FALLBACK.forEach(n => {
+                select.innerHTML += `<option value="${n}" ${n === valAtual ? 'selected' : ''}>${n}</option>`;
             });
         } else {
             snap.forEach(doc => {
