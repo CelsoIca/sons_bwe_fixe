@@ -616,7 +616,7 @@ function carregarSubcategoriasAdmin() {
             return;
         }
 
-        // Agrupar por pai
+        // Agrupar por categoria-mãe
         const grupos = {};
         snap.forEach(doc => {
             const s = doc.data();
@@ -626,25 +626,51 @@ function carregarSubcategoriasAdmin() {
 
         Object.entries(grupos).forEach(([pai, subs]) => {
             const bloco = document.createElement('div');
-            bloco.className = 'glass rounded-[1.5rem] border border-white/5 overflow-hidden';
+            bloco.className = 'glass rounded-[1.5rem] border border-white/5 overflow-hidden mb-2';
             bloco.innerHTML = `
                 <div class="px-5 py-3 bg-white/3 border-b border-white/5 flex items-center gap-2">
                     <i class="fa-solid fa-folder text-[#2E5EBE] text-xs"></i>
                     <span class="text-xs font-black text-white uppercase tracking-widest">${pai}</span>
                     <span class="text-[9px] text-gray-600 font-bold">${subs.length} sub${subs.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div class="p-4 space-y-2">
-                    ${subs.map(s => `
-                        <div class="flex items-center gap-3 bg-white/3 p-3 rounded-xl">
-                            <i class="fa-solid fa-folder-open text-purple-400 text-xs flex-shrink-0"></i>
-                            <span class="text-sm font-bold text-gray-300 flex-1">${s.nome}</span>
+                <div class="p-4 space-y-3">
+                    ${subs.map(s => {
+                        const capaUrl = s.capa || '';
+                        return `
+                        <div class="flex items-center gap-3 bg-white/3 p-3 rounded-2xl hover:bg-white/5 transition" id="subcat-row-${s.id}">
+
+                            <!-- Capa da subcategoria -->
+                            <div class="relative group flex-shrink-0 cursor-pointer" onclick="abrirEditarCapaSubcat('${s.id}','${s.nome}','${s.pai}')">
+                                <div class="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
+                                    ${capaUrl
+                                        ? `<img src="${capaUrl}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<i class=\"fa-solid fa-folder-open text-purple-400\"></i>'">`
+                                        : `<i class="fa-solid fa-folder-open text-purple-400 text-sm"></i>`}
+                                </div>
+                                <div class="absolute inset-0 bg-black/60 rounded-xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                    <i class="fa-solid fa-camera text-white text-xs"></i>
+                                </div>
+                            </div>
+
+                            <!-- Nome -->
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-black text-white truncate">${s.nome}</p>
+                                <p class="text-[9px] text-gray-500 uppercase font-bold">${pai}</p>
+                                ${capaUrl ? '<span class="text-[8px] text-emerald-400 font-bold">● CAPA DEFINIDA</span>' : '<span class="text-[8px] text-gray-600 font-bold">○ SEM CAPA</span>'}
+                            </div>
+
+                            <!-- Acções -->
                             <a href="categoria.html?tipo=${encodeURIComponent(pai)}&sub=${encodeURIComponent(s.nome)}" target="_blank"
-                               class="text-[9px] text-[#2E5EBE] hover:underline font-bold">Ver ↗</a>
-                            <button onclick="eliminarSubcategoria('${s.id}','${s.nome}')"
-                                class="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition">
-                                <i class="fa-solid fa-trash text-[10px]"></i>
+                               class="text-[9px] text-[#2E5EBE] hover:underline font-bold flex-shrink-0">Ver ↗</a>
+                            <button onclick="abrirEditarCapaSubcat('${s.id}','${s.nome}','${s.pai}')"
+                                class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition flex-shrink-0" title="Editar Capa">
+                                <i class="fa-solid fa-image text-xs"></i>
                             </button>
-                        </div>`).join('')}
+                            <button onclick="eliminarSubcategoria('${s.id}','${s.nome}')"
+                                class="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition flex-shrink-0" title="Eliminar">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>`;
+                    }).join('')}
                 </div>`;
             lista.appendChild(bloco);
         });
@@ -807,5 +833,202 @@ async function salvarMoverMusica() {
         carregarMusicasAdmin();
     } catch (e) {
         showAdminToast('Erro ao mover: ' + e.message, 'erro');
+    }
+}
+
+// ==========================================
+// 9. EDITAR CAPA DA SUBCATEGORIA
+//    + actualizar todas as faixas
+// ==========================================
+
+// Abrir modal de edição de capa
+function abrirEditarCapaSubcat(id, nome, pai) {
+    // Criar modal dinamicamente se não existir
+    let modal = document.getElementById('modal-capa-subcat');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-capa-subcat';
+        modal.className = 'fixed inset-0 z-[800] bg-black/90 backdrop-blur-md flex items-center justify-center p-6';
+        modal.innerHTML = `
+            <div class="glass w-full max-w-md p-8 rounded-[3rem] border border-white/10 relative shadow-2xl">
+                <button onclick="fecharModalCapaSubcat()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <h2 class="text-lg font-black mb-1">Capa da Subcategoria</h2>
+                <p id="mcs-nome" class="text-xs text-gray-500 mb-6">—</p>
+
+                <input type="hidden" id="mcs-id">
+                <input type="hidden" id="mcs-pai">
+
+                <!-- Preview da capa actual -->
+                <div class="flex justify-center mb-6">
+                    <div class="w-32 h-32 rounded-2xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center" id="mcs-preview-box">
+                        <i id="mcs-preview-placeholder" class="fa-solid fa-image text-gray-600 text-3xl"></i>
+                        <img id="mcs-preview-img" src="" class="w-full h-full object-cover hidden" onerror="this.classList.add('hidden'); document.getElementById('mcs-preview-placeholder').classList.remove('hidden')">
+                    </div>
+                </div>
+
+                <!-- Upload de nova capa -->
+                <div class="relative glass border-2 border-dashed border-white/10 rounded-2xl p-5 hover:border-blue-500/40 transition flex items-center gap-4 cursor-pointer group mb-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-600 group-hover:text-blue-400 transition"></i>
+                    <div class="flex-1">
+                        <p id="mcs-filename" class="text-xs text-gray-400">Escolher nova imagem...</p>
+                        <p class="text-[8px] text-gray-700 uppercase mt-0.5">PNG, JPG, WEBP · Máx 5MB</p>
+                    </div>
+                    <input type="file" id="mcs-ficheiro" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
+                        onchange="previewCapaSubcat(this)">
+                </div>
+
+                <!-- Info sobre actualização em massa -->
+                <div class="glass p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 mb-6">
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-400 text-xs mt-0.5 flex-shrink-0"></i>
+                        <p class="text-[9px] text-blue-300 leading-relaxed">
+                            A capa será actualizada na subcategoria <strong>e em todas as faixas</strong> que lhe pertencem automaticamente.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="mcs-progress" class="hidden mb-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold">A actualizar faixas...</p>
+                        <p id="mcs-progress-text" class="text-[9px] text-blue-400 font-black">0/0</p>
+                    </div>
+                    <div class="w-full bg-white/5 rounded-full h-1.5">
+                        <div id="mcs-progress-bar" class="bg-[#2E5EBE] h-1.5 rounded-full transition-all" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <button onclick="guardarCapaSubcat()" id="btn-guardar-capa-sub"
+                    class="w-full bg-[#2E5EBE] py-4 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition">
+                    <i class="fa-solid fa-check mr-2"></i>GUARDAR E ACTUALIZAR FAIXAS
+                </button>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    // Preencher dados
+    document.getElementById('mcs-id').value   = id;
+    document.getElementById('mcs-pai').value  = pai;
+    document.getElementById('mcs-nome').innerText = `${pai} › ${nome}`;
+    document.getElementById('mcs-filename').innerText = 'Escolher nova imagem...';
+    document.getElementById('mcs-progress').classList.add('hidden');
+
+    // Mostrar capa actual
+    db.collection("subcategorias").doc(id).get().then(snap => {
+        const capaActual = snap.data()?.capa || '';
+        const img = document.getElementById('mcs-preview-img');
+        const ph  = document.getElementById('mcs-preview-placeholder');
+        if (capaActual) {
+            img.src = capaActual;
+            img.classList.remove('hidden');
+            ph.classList.add('hidden');
+        } else {
+            img.classList.add('hidden');
+            ph.classList.remove('hidden');
+        }
+        // Limpar input de ficheiro
+        const fi = document.getElementById('mcs-ficheiro');
+        if (fi) fi.value = '';
+    });
+
+    modal.style.display = 'flex';
+}
+
+function fecharModalCapaSubcat() {
+    const modal = document.getElementById('modal-capa-subcat');
+    if (modal) modal.style.display = 'none';
+}
+
+// Preview da nova capa antes de guardar
+function previewCapaSubcat(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('mcs-filename').innerText = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = document.getElementById('mcs-preview-img');
+        const ph  = document.getElementById('mcs-preview-placeholder');
+        img.src = e.target.result;
+        img.classList.remove('hidden');
+        ph.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
+// Guardar capa e actualizar todas as faixas da subcategoria
+async function guardarCapaSubcat() {
+    const id   = document.getElementById('mcs-id').value;
+    const pai  = document.getElementById('mcs-pai').value;
+    const file = document.getElementById('mcs-ficheiro').files[0];
+    const btn  = document.getElementById('btn-guardar-capa-sub');
+
+    if (!file) return subcatToast('Escolhe uma imagem primeiro!', 'erro');
+
+    const nomeSub = document.getElementById('mcs-nome').innerText.split(' › ')[1] || '';
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CARREGAR IMAGEM...';
+
+    try {
+        // 1. Upload para ImgBB
+        const novaCapaUrl = await uploadParaImgBB(file);
+        if (!novaCapaUrl) {
+            subcatToast('Erro no upload da imagem.', 'erro');
+            return;
+        }
+
+        // 2. Actualizar documento da subcategoria
+        await db.collection("subcategorias").doc(id).update({ capa: novaCapaUrl });
+
+        // 3. Buscar todas as faixas desta subcategoria
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A ACTUALIZAR FAIXAS...';
+        const progressEl  = document.getElementById('mcs-progress');
+        const progressBar = document.getElementById('mcs-progress-bar');
+        const progressTxt = document.getElementById('mcs-progress-text');
+        progressEl.classList.remove('hidden');
+
+        const faixasSnap = await db.collection("playlist").get();
+        const faixasDaSub = faixasSnap.docs.filter(d => {
+            const data = d.data();
+            return data.subcategoria === nomeSub && data.tipo === pai;
+        });
+
+        const total = faixasDaSub.length;
+        progressTxt.innerText = `0/${total}`;
+
+        if (total === 0) {
+            progressTxt.innerText = 'Nenhuma faixa para actualizar';
+            progressBar.style.width = '100%';
+        } else {
+            // Actualizar em lotes de 500 (limite do Firestore batch)
+            const LOTE = 500;
+            let actualizadas = 0;
+
+            for (let i = 0; i < faixasDaSub.length; i += LOTE) {
+                const lote = db.batch();
+                const chunk = faixasDaSub.slice(i, i + LOTE);
+                chunk.forEach(doc => {
+                    lote.update(db.collection("playlist").doc(doc.id), { capa: novaCapaUrl });
+                });
+                await lote.commit();
+                actualizadas += chunk.length;
+                const pct = Math.round((actualizadas / total) * 100);
+                progressBar.style.width = pct + '%';
+                progressTxt.innerText = `${actualizadas}/${total}`;
+            }
+        }
+
+        subcatToast(`Capa actualizada${total > 0 ? ` em ${total} faixa${total !== 1 ? 's' : ''}` : ''}!`);
+
+        setTimeout(() => fecharModalCapaSubcat(), 1500);
+
+    } catch (e) {
+        console.error(e);
+        subcatToast('Erro: ' + e.message, 'erro');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>GUARDAR E ACTUALIZAR FAIXAS';
     }
 }
