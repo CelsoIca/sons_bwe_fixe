@@ -30,9 +30,7 @@ auth.onAuthStateChanged(async (user) => {
         const userData = userDoc.data();
 
         if (!userData || userData.ativo === false) {
-            alert("ACESSO NEGADO: Conta suspensa.");
-            await auth.signOut();
-            window.location.href = 'index.html';
+            await auth.signOut(); window.location.href = "index.html";
             return;
         }
 
@@ -55,6 +53,19 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
+
+// Toast genérico para o painel admin
+function showAdminToast(msg, tipo) {
+    // Reutiliza catToast se existir, senão cria um toast temporário
+    const existing = document.getElementById('cat-toast');
+    if (existing) { catToast(msg, tipo); return; }
+    const t = document.createElement('div');
+    t.className = `fixed top-6 left-1/2 -translate-x-1/2 z-[999] px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-2xl transition-all ${tipo === 'erro' ? 'bg-red-500/90 text-white' : 'bg-emerald-500/90 text-white'}`;
+    t.innerText = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
 // ==========================================
 // 2. PUBLICAR MÚSICA
 // ==========================================
@@ -68,7 +79,7 @@ async function publicarMusicaAdmin() {
     const file    = inputCapa ? inputCapa.files[0] : null;
 
     if (!titulo || !artista || !urlMp3) {
-        return alert("Preenche o Título, Artista e o Link do Áudio!");
+        return showAdminToast("Preenche o Título, Artista e o Link do Áudio!", "erro");
     }
 
     const textoOriginal = btn.innerHTML;
@@ -81,7 +92,7 @@ async function publicarMusicaAdmin() {
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CARREGAR CAPA...';
             urlFinalCapa = await uploadParaImgBB(file);
             if (!urlFinalCapa) {
-                alert("Erro no upload da capa.");
+                showAdminToast("Erro no upload da capa.", "erro");
                 btn.disabled = false;
                 btn.innerHTML = textoOriginal;
                 return;
@@ -95,7 +106,7 @@ async function publicarMusicaAdmin() {
             dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        alert("✅ Música publicada!");
+        showAdminToast("✅ Música publicada com sucesso!");
         document.getElementById('adm-titulo').value    = '';
         document.getElementById('adm-artista').value   = '';
         document.getElementById('adm-url').value       = '';
@@ -105,7 +116,7 @@ async function publicarMusicaAdmin() {
         carregarMusicasAdmin();
     } catch (e) {
         console.error(e);
-        alert("Erro ao salvar. Verifica a conexão.");
+        showAdminToast("Erro ao salvar. Verifica a conexão.", "erro");
     } finally {
         btn.disabled = false;
         btn.innerHTML = textoOriginal;
