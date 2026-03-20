@@ -182,3 +182,48 @@ footer .glass:hover {
 #mini-player.visible { transform: translateY(0); }
 
 .category-link { display: flex; }
+
+/* ==========================================
+   9. PERFORMANCE & ACESSIBILIDADE
+   ========================================== */
+
+/* Acelerar transições com GPU */
+#sidebar, #side-menu, #mini-player, .card-musica, .faixa-item, .glass {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Imagens lazy — evitar layout shift */
+img { display: block; }
+
+/* Botões — área mínima de toque (acessibilidade) */
+button, a { min-height: 36px; }
+
+/* Scrollbar global fina */
+* { scrollbar-width: thin; scrollbar-color: rgba(46,94,190,0.4) transparent; }
+
+/* Focus visível para acessibilidade de teclado */
+:focus-visible {
+    outline: 2px solid #2E5EBE;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* Animação de fade-in suave para cards */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeInUp 0.35s ease-out forwards; }
+
+/* Skeleton loader */
+@keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 12px;
+}
