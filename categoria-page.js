@@ -178,10 +178,25 @@ db.collection("playlist")
     .where("oculto", "==", false)
     .where("tipo", "==", CATEGORIA)
     .orderBy("ordem", "desc")
-    .onSnapshot(snap => {
-        catPlaylist = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderizarGrid(catPlaylist);
-    });
+    .onSnapshot(
+        snap => {
+            catPlaylist = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderizarGrid(catPlaylist);
+        },
+        err => {
+            // Se o índice composto não existir ainda no Firebase,
+            // fallback para query simples sem ordenação
+            console.warn("Índice em falta, a usar fallback:", err.message);
+            db.collection("playlist")
+                .where("oculto", "==", false)
+                .where("tipo", "==", CATEGORIA)
+                .onSnapshot(snap => {
+                    catPlaylist = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                        .sort((a, b) => (b.ordem || 0) - (a.ordem || 0));
+                    renderizarGrid(catPlaylist);
+                });
+        }
+    );
 
 function renderizarGrid(lista) {
     const grid  = document.getElementById('grid-musicas');
