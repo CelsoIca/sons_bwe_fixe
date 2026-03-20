@@ -16,20 +16,27 @@ const COR_ICONE_INDEX = {
     'fa-music': 'text-blue-400',
 };
 
-db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
+// Categorias padrão — aparecem imediatamente enquanto o Firebase carrega
+const CATS_FALLBACK = [
+    { nome: 'Album',   icone: 'fa-compact-disc',  cor: 'text-orange-500' },
+    { nome: 'EP',      icone: 'fa-layer-group',   cor: 'text-yellow-500' },
+    { nome: 'Single',  icone: 'fa-bolt',          cor: 'text-[#EF3C54]'  },
+    { nome: 'Mixtape', icone: 'fa-cassette-tape', cor: 'text-purple-500' },
+];
+
+function renderizarNavCategorias(lista) {
     const nav = document.getElementById('nav-categorias');
     if (!nav) return;
 
-    // Manter só o parágrafo e o botão "Tudo"
+    // Manter só o parágrafo label e o botão "Tudo"
     const fixos = Array.from(nav.children).filter(el =>
         el.tagName === 'P' || el.tagName === 'BUTTON'
     );
     nav.innerHTML = '';
     fixos.forEach(el => nav.appendChild(el));
 
-    snap.forEach(doc => {
-        const cat = doc.data();
-        const corIcone = COR_ICONE_INDEX[cat.icone || 'fa-music'] || 'text-blue-400';
+    lista.forEach(cat => {
+        const corIcone = COR_ICONE_INDEX[cat.icone || 'fa-music'] || cat.cor || 'text-blue-400';
         const a = document.createElement('a');
         a.href      = `categoria.html?tipo=${encodeURIComponent(cat.nome)}`;
         a.className = 'category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left';
@@ -38,6 +45,20 @@ db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
             <span class="text-sm font-bold group-hover:text-white text-gray-400">${cat.nome}s</span>`;
         nav.appendChild(a);
     });
+}
+
+// Mostrar categorias padrão imediatamente (sem esperar Firebase)
+renderizarNavCategorias(CATS_FALLBACK);
+
+// Actualizar com as categorias reais do Firebase (em tempo real)
+db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
+    if (snap.empty) {
+        // Firebase ainda vazio — manter o fallback
+        renderizarNavCategorias(CATS_FALLBACK);
+        return;
+    }
+    const lista = snap.docs.map(d => d.data());
+    renderizarNavCategorias(lista);
 });
 
 // =============================================
