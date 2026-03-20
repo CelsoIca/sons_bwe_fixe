@@ -4,8 +4,9 @@
 // categoria criada pelo admin, não só as padrão.
 // =============================================
 
-const params    = new URLSearchParams(window.location.search);
-const CATEGORIA = params.get('tipo') || '';
+const params       = new URLSearchParams(window.location.search);
+const CATEGORIA    = params.get('tipo') || '';
+const SUBCATEGORIA = params.get('sub')  || '';   // Opcional: filtrar por subcategoria
 
 // Redirecionar se não houver tipo na URL
 if (!CATEGORIA) { window.location.href = 'index.html'; }
@@ -180,23 +181,63 @@ db.collection("playlist")
     .orderBy("ordem", "desc")
     .onSnapshot(
         snap => {
-            catPlaylist = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            // Filtrar por subcategoria se vier na URL
+            if (SUBCATEGORIA) docs = docs.filter(d => d.subcategoria === SUBCATEGORIA);
+            catPlaylist = docs;
             renderizarGrid(catPlaylist);
+            carregarSubcategoriasNav();
         },
         err => {
-            // Se o índice composto não existir ainda no Firebase,
-            // fallback para query simples sem ordenação
-            console.warn("Índice em falta, a usar fallback:", err.message);
+            console.warn("Índice em falta, fallback:", err.message);
             db.collection("playlist")
                 .where("oculto", "==", false)
                 .where("tipo", "==", CATEGORIA)
                 .onSnapshot(snap => {
-                    catPlaylist = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
                         .sort((a, b) => (b.ordem || 0) - (a.ordem || 0));
+                    if (SUBCATEGORIA) docs = docs.filter(d => d.subcategoria === SUBCATEGORIA);
+                    catPlaylist = docs;
                     renderizarGrid(catPlaylist);
+                    carregarSubcategoriasNav();
                 });
         }
     );
+
+// Carregar subcategorias desta categoria e mostrar como filtros no topo
+function carregarSubcategoriasNav() {
+    const grid = document.getElementById('grid-musicas');
+    if (!grid) return;
+
+    db.collection("subcategorias").get().then(snap => {
+        const subs = snap.docs
+            .map(d => d.data())
+            .filter(s => s.pai === CATEGORIA);
+
+        if (!subs.length) return; // Sem subcategorias — não mostrar filtros
+
+        const filtrosId = 'subcat-filtros';
+        let filtrosEl = document.getElementById(filtrosId);
+        if (!filtrosEl) {
+            filtrosEl = document.createElement('div');
+            filtrosEl.id = filtrosId;
+            filtrosEl.className = 'flex flex-wrap gap-2 mb-6';
+            grid.parentElement.insertBefore(filtrosEl, grid);
+        }
+
+        const activaSub = SUBCATEGORIA || '';
+        filtrosEl.innerHTML = `
+            <a href="categoria.html?tipo=${encodeURIComponent(CATEGORIA)}"
+               class="px-4 py-2 rounded-full text-xs font-black uppercase transition ${!activaSub ? 'bg-[#EF3C54] text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}">
+               Todas
+            </a>
+            ${subs.map(s => `
+                <a href="categoria.html?tipo=${encodeURIComponent(CATEGORIA)}&sub=${encodeURIComponent(s.nome)}"
+                   class="px-4 py-2 rounded-full text-xs font-black uppercase transition ${activaSub === s.nome ? 'bg-[#2E5EBE] text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}">
+                   ${s.nome}
+                </a>`).join('')}`;
+    }).catch(() => {});
+}
 
 function renderizarGrid(lista) {
     const grid  = document.getElementById('grid-musicas');
