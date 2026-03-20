@@ -6,12 +6,12 @@
     <title>Parcerias | Sons Bwé Fixe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-[#020617] text-white min-h-screen selection:bg-[#EF3C54]/30">
 
     <nav class="p-6 flex justify-between items-center max-w-5xl mx-auto z-50 relative">
-        <a href="../index.html" class="glass w-10 h-10 rounded-xl flex items-center justify-center border border-white/5 hover:border-blue-500/50 hover:text-blue-400 transition-all">
+        <a href="index.html" class="glass w-10 h-10 rounded-xl flex items-center justify-center border border-white/5 hover:border-blue-500/50 hover:text-blue-400 transition-all">
             <i class="fa-solid fa-chevron-left text-xs"></i>
         </a>
         <div class="text-right">
@@ -135,8 +135,10 @@
         <p class="text-[9px] text-gray-600 font-black uppercase tracking-[0.5em]">Sons Bwé Fixe © 2024 • Angola para o Mundo</p>
     </footer>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="../script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
 
     <script>
         const form = document.getElementById("contact-form");
@@ -187,4 +189,7 @@
                 btn.disabled = false;
             }
         };
+    </script>
+</body>
+</html>
    
