@@ -81,13 +81,13 @@
                         <input type="text" id="adm-titulo" placeholder="Título da música" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
                         <input type="text" id="adm-artista" placeholder="Nome do Artista" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
                     </div>
-                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div class="grid md:grid-cols-3 gap-4 mb-4">
                         <input type="url" id="adm-url" placeholder="Link direto do MP3 (https://...)" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-xs">
-                        <select id="adm-tipo" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition">
-                            <option value="Single">Single</option>
-                            <option value="Album">Album</option>
-                            <option value="EP">EP</option>
-                            <option value="Mixtape">Mixtape</option>
+                        <select id="adm-tipo" onchange="atualizarSubcategoriasSelect()" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition">
+                            <option value="" disabled>Categoria...</option>
+                        </select>
+                        <select id="adm-subcategoria" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition">
+                            <option value="">Sem subcategoria</option>
                         </select>
                     </div>
                     <div class="mb-6">
@@ -104,9 +104,44 @@
                     </button>
                 </div>
 
-                <!-- Lista de Músicas -->
-                <h3 class="text-[10px] font-black uppercase text-gray-500 mb-4 tracking-widest">Músicas Publicadas</h3>
+                <!-- Filtro + Lista de Músicas -->
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-widest">Músicas Publicadas</h3>
+                    <div class="flex items-center gap-2">
+                        <select id="filtro-categoria" onchange="atualizarFiltroSubcategorias(); carregarMusicasAdmin()" class="bg-[#020617] border border-white/10 px-3 py-2 rounded-xl text-xs text-gray-400 outline-none focus:border-[#EF3C54] transition">
+                            <option value="">Todas as categorias</option>
+                        </select>
+                        <select id="filtro-subcategoria" onchange="carregarMusicasAdmin()" class="bg-[#020617] border border-white/10 px-3 py-2 rounded-xl text-xs text-gray-400 outline-none focus:border-[#EF3C54] transition">
+                            <option value="">Todas as subcategorias</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="adm-lista-musicas" class="grid md:grid-cols-2 gap-4 mb-12"></div>
+
+                <!-- Modal: Mover/Editar música -->
+                <div id="modal-mover" class="fixed inset-0 z-[700] bg-black/90 backdrop-blur-md hidden items-center justify-center p-6" style="display:none">
+                    <div class="glass w-full max-w-md p-8 rounded-[3rem] border border-white/10 relative shadow-2xl">
+                        <button onclick="fecharModalMover()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                        <h2 class="text-lg font-black mb-1">Mover / Editar Faixa</h2>
+                        <p id="modal-musica-nome" class="text-xs text-gray-500 mb-6 truncate">—</p>
+                        <input type="hidden" id="modal-musica-id">
+                        <div class="space-y-4">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-black text-gray-500 uppercase">Categoria</label>
+                                <select id="modal-tipo" onchange="atualizarModalSubcategorias()" class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition"></select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-black text-gray-500 uppercase">Subcategoria</label>
+                                <select id="modal-subcategoria" class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
+                                    <option value="">Sem subcategoria</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="salvarMoverMusica()" class="w-full mt-6 bg-[#2E5EBE] py-4 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition">
+                            <i class="fa-solid fa-check mr-2"></i>GUARDAR ALTERAÇÕES
+                        </button>
+                    </div>
+                </div>
 
                 <!-- GESTÃO DE CATEGORIAS -->
                 <div class="border-t border-white/5 pt-10">
@@ -173,7 +208,41 @@
                     </div>
 
                     <!-- Lista de categorias -->
-                    <div id="adm-lista-categorias" class="space-y-3"></div>
+                    <div id="adm-lista-categorias" class="space-y-3 mb-12"></div>
+
+                    <!-- GESTÃO DE SUBCATEGORIAS -->
+                    <div class="border-t border-white/5 pt-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-widest">Subcategorias</h3>
+                                <p class="text-[9px] text-gray-700 mt-1">Agrupam músicas dentro de uma categoria (ex: Album → "Lado A", "Lado B")</p>
+                            </div>
+                        </div>
+
+                        <div id="subcat-toast" class="hidden mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center transition-all"></div>
+
+                        <!-- Criar subcategoria -->
+                        <div class="glass p-6 rounded-[2rem] border border-white/10 mb-6">
+                            <h4 class="text-[10px] font-black uppercase text-gray-500 mb-5 tracking-widest">
+                                <i class="fa-solid fa-folder-plus mr-2 text-[#2E5EBE]"></i>Nova Subcategoria
+                            </h4>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <select id="nova-subcat-pai" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#2E5EBE] transition text-sm">
+                                    <option value="">Escolher categoria-mãe...</option>
+                                </select>
+                                <input type="text" id="nova-subcat-nome" placeholder="Nome (ex: Lado A)"
+                                    class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm"
+                                    onkeydown="if(event.key==='Enter') criarSubcategoria()">
+                                <button onclick="criarSubcategoria()" id="btn-criar-subcat"
+                                    class="bg-[#2E5EBE] py-4 rounded-2xl font-black text-xs hover:scale-[1.02] active:scale-95 transition shadow-lg">
+                                    <i class="fa-solid fa-plus mr-2"></i>CRIAR SUB
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de subcategorias agrupadas por categoria -->
+                        <div id="adm-lista-subcategorias" class="space-y-4"></div>
+                    </div>
                 </div>
             </section>
 
@@ -245,7 +314,13 @@
             document.getElementById('aba-' + nome).classList.remove('hidden');
             document.getElementById('btn-' + nome).classList.add('bg-white/5', 'text-white');
             if (nome === 'usuarios') carregarUsuariosAdmin();
-            if (nome === 'musicas') { carregarMusicasAdmin(); carregarCategoriasAdmin(); }
+            if (nome === 'musicas') {
+                carregarMusicasAdmin();
+                carregarCategoriasAdmin();
+                carregarSubcategoriasAdmin();
+                carregarSelectPaiSubcat();
+                carregarFiltrosCategorias();
+            }
             if (nome === 'parcerias') carregarParcerias();
         }
 
