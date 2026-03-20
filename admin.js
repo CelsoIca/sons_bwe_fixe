@@ -453,39 +453,37 @@ async function guardarEdicaoCategoria(id) {
 
 // CRIAR nova categoria — função global, acessível pelo botão no HTML
 async function criarCategoria() {
-    const nomeInput  = document.getElementById('nova-cat-nome');
+    const nomeInput   = document.getElementById('nova-cat-nome');
     const iconeSelect = document.getElementById('nova-cat-icone');
-    const btn        = document.getElementById('btn-criar-cat');
+    const btn         = document.getElementById('btn-criar-cat');
 
     const nome  = nomeInput ? nomeInput.value.trim() : '';
     const icone = iconeSelect ? iconeSelect.value : 'fa-music';
 
     if (!nome) return catToast('Dá um nome à categoria!', 'erro');
 
-    // Verificar duplicado
-    try {
-        const existe = await db.collection("categorias").where("nome", "==", nome).get();
-        if (!existe.empty) return catToast(`"${nome}" já existe!`, 'erro');
-    } catch (e) {
-        return catToast('Erro ao verificar. Tenta novamente.', 'erro');
-    }
-
     // Bloquear botão
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CRIAR...'; }
 
     try {
-        const snap = await db.collection("categorias").orderBy("ordem", "desc").limit(1).get();
-        const ordemMax = snap.empty ? 0 : (snap.docs[0].data().ordem || 0);
+        // Verificar duplicado lendo todos os docs (sem where, sem índice)
+        const todasSnap = await db.collection("categorias").get();
+        const nomesExist = todasSnap.docs.map(d => (d.data().nome || '').toLowerCase());
+        if (nomesExist.includes(nome.toLowerCase())) {
+            catToast(`A categoria "${nome}" já existe!`, 'erro');
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus mr-2"></i>CRIAR CATEGORIA'; }
+            return;
+        }
+
+        const ordemMax = todasSnap.empty ? 0 : Math.max(0, ...todasSnap.docs.map(d => d.data().ordem || 0));
 
         await db.collection("categorias").add({
-            nome,
-            icone,
+            nome, icone,
             ordem: ordemMax + 1,
             criada: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Limpar formulário
-        if (nomeInput)  nomeInput.value  = '';
+        if (nomeInput) nomeInput.value = '';
         const previewNome = document.getElementById('preview-nome');
         if (previewNome) previewNome.innerText = '—';
 
@@ -493,7 +491,7 @@ async function criarCategoria() {
 
     } catch (e) {
         console.error("Erro ao criar categoria:", e);
-        catToast('Erro ao criar. Verifica a ligação.', 'erro');
+        catToast('Erro ao criar. Verifica a ligação: ' + e.message, 'erro');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus mr-2"></i>CRIAR CATEGORIA'; }
     }
