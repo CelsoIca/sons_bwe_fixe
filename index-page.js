@@ -1,196 +1,294 @@
-// =============================================
-// INDEX-PAGE.JS — Lógica exclusiva do index
-// =============================================
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sons Bwé Fixe | Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        @media (min-width: 768px) {
+            #sidebar { transform: translateX(0) !important; position: fixed; z-index: 50; }
+            #sidebar-overlay { display: none !important; }
+            #toggle-sidebar-btn { display: none !important; }
+            #main-wrapper { margin-left: 18rem; }
+        }
+        @media (max-width: 767px) {
+            #main-wrapper { margin-left: 0; }
+        }
 
-const ICONES_CAT = {
-    'Album':   { icon: 'fa-compact-disc',  cor: 'text-orange-500' },
-    'EP':      { icon: 'fa-layer-group',   cor: 'text-yellow-500' },
-    'Single':  { icon: 'fa-bolt',          cor: 'text-[#EF3C54]'  },
-    'Mixtape': { icon: 'fa-cassette-tape', cor: 'text-purple-500' },
-};
+        /* Slideshow */
+        .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; }
+        .slide.active { opacity: 1; }
 
-// Categorias padrão já têm link fixo na sidebar
-const CATS_PADRAO = ['Album', 'EP', 'Single', 'Mixtape'];
+        /* Lista de faixas */
+        .faixa-item { transition: all 0.2s; }
+        .faixa-item:hover { background: rgba(255,255,255,0.07); }
+        .faixa-item.playing { background: rgba(239,60,84,0.1); border-left: 3px solid #EF3C54; }
+        .faixa-item.playing .faixa-num { display: none; }
+        .faixa-item.playing .faixa-eq { display: flex; }
+        .faixa-eq { display: none; align-items: flex-end; gap: 2px; height: 16px; }
+        .faixa-eq span {
+            display: inline-block; width: 3px; background: #EF3C54; border-radius: 2px;
+            animation: eq-bar 0.6s ease-in-out infinite alternate;
+        }
+        .faixa-eq span:nth-child(2) { animation-delay: 0.2s; }
+        .faixa-eq span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes eq-bar {
+            from { height: 4px; }
+            to { height: 14px; }
+        }
+    </style>
+</head>
+<body class="bg-[#020617] text-white">
 
-// =============================================
-// 1. TODAS AS CATEGORIAS NA SIDEBAR
-//    (carregadas do Firebase em tempo real)
-// =============================================
-const COR_ICONE_INDEX = {
-    'fa-compact-disc': 'text-orange-500', 'fa-layer-group': 'text-yellow-500',
-    'fa-bolt': 'text-[#EF3C54]',          'fa-cassette-tape': 'text-purple-500',
-    'fa-microphone': 'text-pink-400',     'fa-star': 'text-yellow-300',
-    'fa-fire': 'text-red-400',            'fa-headphones': 'text-blue-400',
-    'fa-guitar': 'text-green-400',        'fa-drum': 'text-indigo-400',
-    'fa-record-vinyl': 'text-teal-400',   'fa-radio': 'text-cyan-400',
-    'fa-music': 'text-blue-400',
-};
+    <!-- Botão toggle sidebar mobile -->
+    <button id="toggle-sidebar-btn" onclick="toggleSidebar()" class="fixed top-6 left-6 z-[100] glass w-12 h-12 flex items-center justify-center rounded-full border border-white/10 hover:bg-white/10 hover:scale-110 transition-all shadow-xl text-[#2E5EBE]">
+        <i class="fa-solid fa-bars-staggered"></i>
+    </button>
 
-db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
-    const nav = document.getElementById('nav-categorias');
-    if (!nav) return;
+    <!-- SIDEBAR ESQUERDA -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-[200] w-72 bg-[#020617]/95 backdrop-blur-xl border-r border-white/5 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="p-8 h-full flex flex-col">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-xl font-black uppercase tracking-tighter">Explorar</h2>
+                    <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-0.5">Sons Bwé Fixe</p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
 
-    // Manter só o parágrafo e o botão "Tudo"
-    const fixos = Array.from(nav.children).filter(el =>
-        el.tagName === 'P' || el.tagName === 'BUTTON'
-    );
-    nav.innerHTML = '';
-    fixos.forEach(el => nav.appendChild(el));
+            <div class="relative mb-6">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs" id="search-icon"></i>
+                <input type="text" id="search-input" oninput="executarPesquisa()" placeholder="Pesquisar faixa ou artista..."
+                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-xs outline-none focus:border-[#EF3C54] transition">
+            </div>
 
-    snap.forEach(doc => {
-        const cat = doc.data();
-        const corIcone = COR_ICONE_INDEX[cat.icone || 'fa-music'] || 'text-blue-400';
-        const a = document.createElement('a');
-        a.href      = `categoria.html?tipo=${encodeURIComponent(cat.nome)}`;
-        a.className = 'category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left';
-        a.innerHTML = `
-            <i class="fa-solid ${cat.icone || 'fa-music'} ${corIcone}"></i>
-            <span class="text-sm font-bold group-hover:text-white text-gray-400">${cat.nome}s</span>`;
-        nav.appendChild(a);
-    });
-});
+            <div id="search-results" class="hidden space-y-3 max-h-[260px] overflow-y-auto pr-2 mb-6 border-b border-white/5 pb-6">
+                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Resultados</p>
+            </div>
 
-// =============================================
-// 2. SLIDESHOW
-// =============================================
-let slideshowInterval = null;
-let slideshowIndex = 0;
+            <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
+                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
+                <button onclick="filtrarCategoria('all', this)" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
+                    <i class="fa-solid fa-music text-[#2E5EBE]"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Tudo</span>
+                </button>
+                <!-- Categorias carregadas dinamicamente do Firebase pelo index-page.js -->
+            </nav>
 
-function iniciarSlideshow() {
-    const capas = playlistOriginal.map(m => m.capa).filter(c => c && c.trim() !== '');
-    const unicas = [...new Set(capas)];
-    if (unicas.length === 0) return;
+            <div class="mt-auto pt-6 border-t border-white/5">
+                <p class="text-[9px] text-gray-600 text-center uppercase tracking-widest">Sons Bwé Fixe © 2026</p>
+            </div>
+        </div>
+    </aside>
 
-    const container = document.getElementById('slideshow');
-    if (!container) return;
-    container.innerHTML = '';
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-[150] hidden backdrop-blur-sm"></div>
 
-    unicas.forEach((capa, i) => {
-        const div = document.createElement('div');
-        div.className = 'slide' + (i === 0 ? ' active' : '');
-        div.innerHTML = `<img src="${capa}" class="w-full h-full object-cover" onerror="this.parentElement.remove()">`;
-        container.appendChild(div);
-    });
+    <!-- Botão menu direito -->
+    <button id="open-menu" class="fixed top-6 right-6 z-[100] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg hover:scale-110 active:scale-90 transition flex items-center justify-center">
+        <i class="fa-solid fa-bars"></i>
+    </button>
 
-    clearInterval(slideshowInterval);
-    slideshowIndex = 0;
-    slideshowInterval = setInterval(() => {
-        const slides = container.querySelectorAll('.slide');
-        if (!slides.length) return;
-        slides[slideshowIndex % slides.length].classList.remove('active');
-        slideshowIndex = (slideshowIndex + 1) % slides.length;
-        slides[slideshowIndex].classList.add('active');
-    }, 3000);
-}
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div id="main-wrapper" class="transition-all duration-300">
+        <main class="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto pt-8 px-4 sm:px-6 pb-16">
 
-function pararSlideshow() {
-    clearInterval(slideshowInterval);
-    slideshowInterval = null;
-}
-
-function mostrarSlideshowOuCapa(musicaTocando) {
-    const coverEl = document.getElementById('main-cover');
-    const slideshowEl = document.getElementById('slideshow');
-    if (!coverEl || !slideshowEl) return;
-
-    if (musicaTocando) {
-        coverEl.style.opacity = '1';
-        coverEl.style.zIndex = '10';
-        slideshowEl.style.opacity = '0';
-        pararSlideshow();
-    } else {
-        coverEl.style.opacity = '0';
-        coverEl.style.zIndex = '0';
-        slideshowEl.style.opacity = '1';
-        iniciarSlideshow();
-    }
-}
-
-// =============================================
-// 3. LISTA DE FAIXAS
-// =============================================
-function renderizarListaFaixas() {
-    const lista = document.getElementById('lista-faixas');
-    const totalEl = document.getElementById('total-faixas');
-    if (!lista) return;
-
-    if (totalEl) totalEl.innerText = playlist.length + ' faixas';
-    lista.innerHTML = '';
-
-    if (playlist.length === 0) {
-        lista.innerHTML = '<p class="text-center text-gray-600 text-xs py-8 italic">Nenhuma faixa disponível.</p>';
-        return;
-    }
-
-    playlist.forEach((m, i) => {
-        const isAtual = i === indexMusica && audio && audio.src;
-        const div = document.createElement('div');
-        div.id = 'faixa-' + i;
-        div.className = 'faixa-item px-5 py-4 flex items-center gap-4 cursor-pointer' + (isAtual ? ' playing' : '');
-        div.onclick = () => {
-            renderizarMusica(i);
-            audio.play();
-            if (playBtn) {
-                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                playBtn.classList.add('animate-pulse-pink');
-            }
-            mostrarSlideshowOuCapa(true);
-            atualizarFaixaAtiva(i);
-        };
-        div.innerHTML = `
-            <div class="w-6 flex items-center justify-center flex-shrink-0">
-                <span class="faixa-num text-[10px] text-gray-600 font-black">${i + 1}</span>
-                <div class="faixa-eq">
-                    <span></span><span></span><span></span>
+            <!-- CABEÇALHO: Logo + Nome -->
+            <div class="flex items-center gap-4 mb-8 pl-2">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#2E5EBE] to-[#EF3C54] flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0 border-2 border-white/10">
+                    <i class="fa-solid fa-headphones text-xl sm:text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter leading-none">Sons Bwé <span class="text-[#EF3C54]">Fixe</span></h1>
+                    <p class="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-[0.25em] mt-1">Angola para o Mundo</p>
                 </div>
             </div>
-            <img src="${m.capa || 'assets/default.png'}" class="w-10 h-10 rounded-xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
-            <div class="flex-1 overflow-hidden">
-                <p class="text-xs font-black text-white truncate">${m.titulo}</p>
-                <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
+
+            <!-- PLAYER -->
+            <div class="glass rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-8 md:p-10 lg:p-12 text-center border border-white/10 shadow-2xl relative overflow-hidden mb-6">
+
+                <!-- Capa / Slideshow -->
+                <div id="cover-container" class="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto aspect-square rounded-2xl sm:rounded-3xl mb-6 md:mb-8 overflow-hidden bg-black/20 shadow-inner">
+                    <img id="main-cover" src="assets/default.png" class="w-full h-full object-cover transition-opacity duration-500 absolute inset-0 z-10">
+                    <div id="slideshow" class="absolute inset-0 z-0"></div>
+                    <div id="party-lights" class="hidden"></div>
+                </div>
+
+                <div class="mb-6 md:mb-8">
+                    <h2 id="main-title" class="text-2xl sm:text-3xl md:text-4xl font-black truncate">Sons Bwé Fixe</h2>
+                    <p id="main-artist" class="text-gray-500 uppercase text-xs sm:text-sm tracking-widest mt-2">Seleciona uma faixa</p>
+                </div>
+
+                <audio id="main-audio"></audio>
+
+                <div class="flex items-center gap-3 mb-8 md:mb-10 max-w-lg mx-auto">
+                    <span id="current-time" class="text-[9px] sm:text-xs text-gray-500 w-8 text-right flex-shrink-0">0:00</span>
+                    <input type="range" id="progress-bar" value="0" min="0" max="100"
+                        class="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#EF3C54]">
+                    <span id="duration-time" class="text-[9px] sm:text-xs text-gray-500 w-8 text-left flex-shrink-0">0:00</span>
+                </div>
+
+                <div class="flex justify-between items-center px-4 sm:px-10 md:px-20 max-w-sm sm:max-w-md md:max-w-lg mx-auto">
+                    <button onclick="musicaAnterior()" class="text-2xl sm:text-3xl text-gray-500 hover:text-white hover:scale-110 transition">
+                        <i class="fa-solid fa-backward-step"></i>
+                    </button>
+                    <button id="play-btn" onclick="togglePlay()" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-[#EF3C54] text-white text-3xl sm:text-4xl md:text-5xl shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition flex items-center justify-center">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <button onclick="proximaMusica()" class="text-2xl sm:text-3xl text-gray-500 hover:text-white hover:scale-110 transition">
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                </div>
             </div>
-            <a href="categoria.html?tipo=${encodeURIComponent(m.tipo || 'Single')}"
-               onclick="event.stopPropagation()"
-               class="text-[8px] text-gray-600 font-bold uppercase flex-shrink-0 hover:text-[#EF3C54] transition px-2 py-1 rounded-lg hover:bg-white/5">
-               ${m.tipo || 'Single'}
-            </a>`;
-        lista.appendChild(div);
-    });
-}
 
-function atualizarFaixaAtiva(idx) {
-    document.querySelectorAll('.faixa-item').forEach((el, i) => {
-        el.classList.toggle('playing', i === idx);
-    });
-}
+            <!-- LISTA DE FAIXAS -->
+            <div class="glass rounded-[2rem] border border-white/10 overflow-hidden w-full">
+                <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Todas as Faixas</h3>
+                    <span id="total-faixas" class="text-[9px] text-gray-600 font-bold">—</span>
+                </div>
+                <div id="lista-faixas" class="divide-y divide-white/5 max-h-[420px] sm:max-h-[520px] md:max-h-[620px] overflow-y-auto"></div>
+            </div>
 
-// =============================================
-// 4. HOOKS NOS EVENTOS DO ÁUDIO
-// =============================================
-window.addEventListener('load', () => {
-    const audioEl = document.getElementById('main-audio');
-    if (!audioEl) return;
+        </main>
 
-    audioEl.addEventListener('play',  () => mostrarSlideshowOuCapa(true));
-    audioEl.addEventListener('pause', () => mostrarSlideshowOuCapa(false));
-    audioEl.addEventListener('ended', () => mostrarSlideshowOuCapa(false));
+        <!-- RODAPÉ -->
+        <footer class="border-t border-white/5 mt-4">
 
-    // Arrancar slideshow após 1.5s (dá tempo ao Firebase carregar)
-    setTimeout(() => {
-        if (!audioEl.src || audioEl.paused) mostrarSlideshowOuCapa(false);
-    }, 1500);
-});
+            <!-- Banda superior: Logo + tagline + redes sociais -->
+            <div class="w-full max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
-// =============================================
-// 5. HOOK NO renderizarMusica do script.js
-//    (actualiza a faixa activa na lista)
-// =============================================
-window.addEventListener('load', () => {
-    const orig = window.renderizarMusica;
-    if (typeof orig === 'function') {
-        window.renderizarMusica = function(i) {
-            orig(i);
-            setTimeout(() => atualizarFaixaAtiva(i), 50);
-        };
-    }
-});
+                <!-- Logo + nome -->
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#2E5EBE] to-[#EF3C54] flex items-center justify-center shadow-lg flex-shrink-0">
+                        <i class="fa-solid fa-headphones text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-base font-black tracking-tighter">Sons Bwé <span class="text-[#EF3C54]">Fixe</span></p>
+                        <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Angola para o Mundo</p>
+                    </div>
+                </div>
+
+                <!-- Descrição -->
+                <p class="text-xs text-gray-500 leading-relaxed mb-8 max-w-xs">
+                    A plataforma de música angolana que conecta artistas, fãs e a indústria. Descobre novos sons, acompanha os teus artistas favoritos e faz parte do movimento.
+                </p>
+
+                <!-- Redes Sociais -->
+                <div class="mb-8">
+                    <p class="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-4">Segue-nos</p>
+                    <div class="flex gap-3 flex-wrap">
+                        <a href="https://instagram.com/sonsbwefixe" target="_blank"
+                            class="group flex items-center gap-2 bg-white/5 border border-white/5 hover:border-pink-500/50 hover:bg-pink-500/10 px-4 py-2.5 rounded-2xl transition-all">
+                            <i class="fa-brands fa-instagram text-pink-400 text-sm group-hover:scale-110 transition-transform"></i>
+                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white">Instagram</span>
+                        </a>
+                        <a href="https://tiktok.com/@sonsbwefixe" target="_blank"
+                            class="group flex items-center gap-2 bg-white/5 border border-white/5 hover:border-white/30 hover:bg-white/10 px-4 py-2.5 rounded-2xl transition-all">
+                            <i class="fa-brands fa-tiktok text-white text-sm group-hover:scale-110 transition-transform"></i>
+                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white">TikTok</span>
+                        </a>
+                        <a href="https://youtube.com/@sonsbwefixe" target="_blank"
+                            class="group flex items-center gap-2 bg-white/5 border border-white/5 hover:border-red-500/50 hover:bg-red-500/10 px-4 py-2.5 rounded-2xl transition-all">
+                            <i class="fa-brands fa-youtube text-red-500 text-sm group-hover:scale-110 transition-transform"></i>
+                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white">YouTube</span>
+                        </a>
+                        <a href="https://wa.me/2449XXXXXXXX" target="_blank"
+                            class="group flex items-center gap-2 bg-white/5 border border-white/5 hover:border-green-500/50 hover:bg-green-500/10 px-4 py-2.5 rounded-2xl transition-all">
+                            <i class="fa-brands fa-whatsapp text-green-400 text-sm group-hover:scale-110 transition-transform"></i>
+                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white">WhatsApp</span>
+                        </a>
+                        <a href="https://facebook.com/sonsbwefixe" target="_blank"
+                            class="group flex items-center gap-2 bg-white/5 border border-white/5 hover:border-blue-500/50 hover:bg-blue-500/10 px-4 py-2.5 rounded-2xl transition-all">
+                            <i class="fa-brands fa-facebook text-blue-400 text-sm group-hover:scale-110 transition-transform"></i>
+                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white">Facebook</span>
+                        </a>
+                        <a href="https://open.spotify.com" target="_blank"
+                            class="group flex items-center gap-2 bg-white/5 border border-white/5 hover:border-green-400/50 hover:bg-green-400/10 px-4 py-2.5 rounded-2xl transition-all">
+                            <i class="fa-brands fa-spotify text-green-400 text-sm group-hover:scale-110 transition-transform"></i>
+                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white">Spotify</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Links rápidos + contacto -->
+                <div class="grid grid-cols-2 gap-6 mb-8 pt-6 border-t border-white/5">
+                    <div>
+                        <p class="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-3">Navegar</p>
+                        <ul class="space-y-2">
+                            <li><a href="index.html" class="text-xs text-gray-500 hover:text-white transition">Home</a></li>
+                            <li><a href="login.html" class="text-xs text-gray-500 hover:text-white transition">Entrar</a></li>
+                            <li><a href="perfil.html" class="text-xs text-gray-500 hover:text-white transition">Perfil</a></li>
+                            <li><a href="contacto.html" class="text-xs text-gray-500 hover:text-white transition">Parcerias</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-3">Contacto</p>
+                        <ul class="space-y-2">
+                            <li class="flex items-center gap-2 text-xs text-gray-500">
+                                <i class="fa-solid fa-envelope text-[#2E5EBE] text-[10px]"></i>
+                                <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="34535146555874475b5a47564351525d4c511a575b59">[email&#160;protected]</a>
+                            </li>
+                            <li class="flex items-center gap-2 text-xs text-gray-500">
+                                <i class="fa-solid fa-location-dot text-[#EF3C54] text-[10px]"></i>
+                                Luanda, Angola
+                            </li>
+                            <li class="flex items-center gap-2 text-xs text-gray-500">
+                                <i class="fa-brands fa-whatsapp text-green-400 text-[10px]"></i>
+                                +244 9XX XXX XXX
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CTA Parceria -->
+                <a href="contacto.html" class="flex items-center justify-between w-full glass border border-[#2E5EBE]/30 hover:border-[#2E5EBE]/70 hover:bg-[#2E5EBE]/10 p-4 rounded-2xl transition-all group mb-8">
+                    <div>
+                        <p class="text-xs font-black text-white">Queres trabalhar connosco?</p>
+                        <p class="text-[9px] text-gray-500">Envia a tua proposta de parceria</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-[#2E5EBE] group-hover:translate-x-1 transition-transform"></i>
+                </a>
+
+                <!-- Copyright -->
+                <div class="flex items-center justify-between pt-6 border-t border-white/5">
+                    <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest">© 2026 Sons Bwé Fixe</p>
+                    <p class="text-[8px] text-gray-700 uppercase tracking-widest">Todos os direitos reservados</p>
+                </div>
+
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- MENU DIREITO -->
+    <div id="side-menu" class="fixed inset-0 z-[300] hidden">
+        <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col shadow-2xl">
+            <h3 class="font-black text-xl text-[#FBD8AB] mb-10 uppercase tracking-tighter">Menu</h3>
+            <nav class="flex flex-col gap-6 font-bold text-sm uppercase">
+                <a href="index.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-house text-[#2E5EBE]"></i>Home</a>
+                <a href="login.html" id="link-login" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-right-to-bracket text-[#2E5EBE]"></i>Entrar</a>
+                <a href="perfil.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-user text-[#2E5EBE]"></i>Perfil</a>
+                <a href="contacto.html" class="hover:text-[#EF3C54] transition flex items-center gap-3"><i class="fa-solid fa-envelope text-[#2E5EBE]"></i>Contactos</a>
+                <a href="admin.html" id="link-admin" class="hidden mt-4 pt-4 border-t border-white/10 text-orange-500 hover:text-orange-400 flex items-center gap-3">
+                    <i class="fa-solid fa-shield-halved"></i>Admin
+                </a>
+                <button onclick="logout()" id="btn-logout" class="hidden text-left text-red-500 hover:text-red-400 mt-4 flex items-center gap-3 uppercase">
+                    <i class="fa-solid fa-power-off"></i>Sair
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+    <script src="index-page.js"></script>
+</body>
+</html>
