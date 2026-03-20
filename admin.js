@@ -102,9 +102,13 @@ async function publicarMusicaAdmin() {
             }
         }
 
+        const subcategoria = document.getElementById('adm-subcategoria')?.value || '';
+
         await db.collection("playlist").add({
             titulo, artista, url: urlMp3,
-            capa: urlFinalCapa, tipo, oculto: false,
+            capa: urlFinalCapa, tipo,
+            subcategoria: subcategoria,
+            oculto: false,
             ordem: Date.now(),
             dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -116,6 +120,8 @@ async function publicarMusicaAdmin() {
         const capaNome = document.getElementById('capa-filename');
         if (capaNome) capaNome.innerText = 'Escolher ficheiro de imagem...';
         if (inputCapa) inputCapa.value = '';
+        const subcatSel = document.getElementById('adm-subcategoria');
+        if (subcatSel) { subcatSel.innerHTML = '<option value="">Sem subcategoria</option>'; }
         carregarMusicasAdmin();
     } catch (e) {
         console.error(e);
@@ -127,17 +133,32 @@ async function publicarMusicaAdmin() {
 }
 
 // ==========================================
-// 3. LISTAR MÚSICAS
+// 3. LISTAR MÚSICAS (com filtro de categoria/subcategoria)
 // ==========================================
+let _musicasUnsubscribe = null;
+
 function carregarMusicasAdmin() {
-    const lista = document.getElementById('adm-lista-musicas');
-    db.collection("playlist").orderBy("ordem", "desc").onSnapshot(snap => {
+    const lista       = document.getElementById('adm-lista-musicas');
+    const filtroCat   = document.getElementById('filtro-categoria')?.value || '';
+    const filtroSub   = document.getElementById('filtro-subcategoria')?.value || '';
+
+    if (_musicasUnsubscribe) { _musicasUnsubscribe(); _musicasUnsubscribe = null; }
+
+    let query = db.collection("playlist").orderBy("ordem", "desc");
+
+    _musicasUnsubscribe = query.onSnapshot(snap => {
         lista.innerHTML = "";
-        if (snap.empty) {
-            lista.innerHTML = "<p class='text-center text-gray-600 py-10 italic col-span-2'>Nenhuma música publicada ainda.</p>";
+        let docs = snap.docs;
+
+        // Filtrar localmente (evita índices compostos)
+        if (filtroCat)  docs = docs.filter(d => d.data().tipo === filtroCat);
+        if (filtroSub)  docs = docs.filter(d => d.data().subcategoria === filtroSub);
+
+        if (!docs.length) {
+            lista.innerHTML = "<p class='text-center text-gray-600 py-10 italic col-span-2'>Nenhuma música encontrada.</p>";
             return;
         }
-        snap.forEach(doc => {
+        docs.forEach(doc => {
             const m = doc.data();
             lista.innerHTML += `
                 <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4 hover:border-blue-500/20 transition">
@@ -147,13 +168,16 @@ function carregarMusicasAdmin() {
                         <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
                         <div class="flex items-center gap-2 mt-1 flex-wrap">
                             <span class="text-[8px] font-black ${m.oculto ? 'text-red-400' : 'text-emerald-400'} uppercase">${m.oculto ? 'OCULTO' : 'VISÍVEL'}</span>
-                            <a href="categoria.html?tipo=${encodeURIComponent(m.tipo || 'Single')}" target="_blank"
-                               class="text-[8px] font-black text-[#2E5EBE] hover:text-blue-400 uppercase hover:underline transition">
-                               ${m.tipo || 'Single'} ↗
-                            </a>
+                            <a href="categoria.html?tipo=${encodeURIComponent(m.tipo || '')}" target="_blank"
+                               class="text-[8px] font-black text-[#2E5EBE] hover:underline uppercase">${m.tipo || '—'} ↗</a>
+                            ${m.subcategoria ? `<span class="text-[8px] font-black text-purple-400 uppercase">${m.subcategoria}</span>` : ''}
                         </div>
                     </div>
                     <div class="flex flex-col gap-2">
+                        <button onclick="abrirModalMover('${doc.id}','${(m.titulo||'').replace(/'/g,"\'")}','${m.tipo||''}','${m.subcategoria||''}')"
+                            class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center hover:bg-blue-500/20 transition" title="Mover / Editar">
+                            <i class="fa-solid fa-arrows-up-down-left-right text-xs text-blue-400"></i>
+                        </button>
                         <button onclick="toggleOcultarMusica('${doc.id}', ${m.oculto})" class="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition" title="${m.oculto ? 'Mostrar' : 'Ocultar'}">
                             <i class="fa-solid ${m.oculto ? 'fa-eye' : 'fa-eye-slash'} text-xs text-gray-400"></i>
                         </button>
@@ -548,4 +572,240 @@ async function seedCategorias() {
     });
     await batch.commit();
     catToast('Categorias padrão criadas com sucesso!');
+}
+
+// ==========================================
+// 7. SUBCATEGORIAS
+// ==========================================
+
+function subcatToast(msg, tipo) {
+    const el = document.getElementById('subcat-toast');
+    if (!el) return;
+    el.className = 'mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center '
+        + (tipo === 'erro'
+            ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20');
+    el.innerText = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3500);
+}
+
+// Preencher select de categoria-mãe das subcategorias
+function carregarSelectPaiSubcat() {
+    const sel = document.getElementById('nova-subcat-pai');
+    if (!sel) return;
+    db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
+        const val = sel.value;
+        sel.innerHTML = '<option value="">Escolher categoria-mãe...</option>';
+        snap.forEach(doc => {
+            const c = doc.data();
+            sel.innerHTML += `<option value="${c.nome}" ${c.nome === val ? 'selected' : ''}>${c.nome}</option>`;
+        });
+    });
+}
+
+// Listar subcategorias agrupadas por categoria-mãe
+function carregarSubcategoriasAdmin() {
+    const lista = document.getElementById('adm-lista-subcategorias');
+    if (!lista) return;
+
+    db.collection("subcategorias").orderBy("pai").onSnapshot(snap => {
+        lista.innerHTML = '';
+        if (snap.empty) {
+            lista.innerHTML = `<p class="text-gray-600 text-xs italic text-center py-6">Nenhuma subcategoria criada ainda.</p>`;
+            return;
+        }
+
+        // Agrupar por pai
+        const grupos = {};
+        snap.forEach(doc => {
+            const s = doc.data();
+            if (!grupos[s.pai]) grupos[s.pai] = [];
+            grupos[s.pai].push({ id: doc.id, ...s });
+        });
+
+        Object.entries(grupos).forEach(([pai, subs]) => {
+            const bloco = document.createElement('div');
+            bloco.className = 'glass rounded-[1.5rem] border border-white/5 overflow-hidden';
+            bloco.innerHTML = `
+                <div class="px-5 py-3 bg-white/3 border-b border-white/5 flex items-center gap-2">
+                    <i class="fa-solid fa-folder text-[#2E5EBE] text-xs"></i>
+                    <span class="text-xs font-black text-white uppercase tracking-widest">${pai}</span>
+                    <span class="text-[9px] text-gray-600 font-bold">${subs.length} sub${subs.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="p-4 space-y-2">
+                    ${subs.map(s => `
+                        <div class="flex items-center gap-3 bg-white/3 p-3 rounded-xl">
+                            <i class="fa-solid fa-folder-open text-purple-400 text-xs flex-shrink-0"></i>
+                            <span class="text-sm font-bold text-gray-300 flex-1">${s.nome}</span>
+                            <a href="categoria.html?tipo=${encodeURIComponent(pai)}&sub=${encodeURIComponent(s.nome)}" target="_blank"
+                               class="text-[9px] text-[#2E5EBE] hover:underline font-bold">Ver ↗</a>
+                            <button onclick="eliminarSubcategoria('${s.id}','${s.nome}')"
+                                class="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
+                            </button>
+                        </div>`).join('')}
+                </div>`;
+            lista.appendChild(bloco);
+        });
+    });
+}
+
+async function criarSubcategoria() {
+    const pai  = document.getElementById('nova-subcat-pai')?.value?.trim();
+    const nome = document.getElementById('nova-subcat-nome')?.value?.trim();
+    const btn  = document.getElementById('btn-criar-subcat');
+
+    if (!pai)  return subcatToast('Escolhe uma categoria-mãe!', 'erro');
+    if (!nome) return subcatToast('Dá um nome à subcategoria!', 'erro');
+
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A CRIAR...'; }
+
+    try {
+        const todas = await db.collection("subcategorias").get();
+        const existe = todas.docs.some(d => d.data().pai === pai && d.data().nome.toLowerCase() === nome.toLowerCase());
+        if (existe) {
+            subcatToast(`"${nome}" já existe em "${pai}"!`, 'erro');
+            return;
+        }
+
+        await db.collection("subcategorias").add({
+            nome, pai,
+            criada: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('nova-subcat-nome').value = '';
+        subcatToast(`Subcategoria "${nome}" criada em "${pai}"!`);
+    } catch (e) {
+        console.error(e);
+        subcatToast('Erro ao criar: ' + e.message, 'erro');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus mr-2"></i>CRIAR SUB'; }
+    }
+}
+
+async function eliminarSubcategoria(id, nome) {
+    if (!confirm(`Eliminar a subcategoria "${nome}"?`)) return;
+    try {
+        await db.collection("subcategorias").doc(id).delete();
+        subcatToast(`"${nome}" eliminada.`);
+    } catch (e) {
+        subcatToast('Erro ao eliminar.', 'erro');
+    }
+}
+
+// Actualizar select de subcategoria no formulário de publicar
+function atualizarSubcategoriasSelect() {
+    const tipo = document.getElementById('adm-tipo')?.value;
+    const sel  = document.getElementById('adm-subcategoria');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Sem subcategoria</option>';
+    if (!tipo) return;
+
+    db.collection("subcategorias").where("pai", "==", tipo).get().then(snap => {
+        snap.forEach(doc => {
+            const s = doc.data();
+            sel.innerHTML += `<option value="${s.nome}">${s.nome}</option>`;
+        });
+    }).catch(() => {
+        // Fallback sem índice
+        db.collection("subcategorias").get().then(snap => {
+            snap.forEach(doc => {
+                const s = doc.data();
+                if (s.pai === tipo) sel.innerHTML += `<option value="${s.nome}">${s.nome}</option>`;
+            });
+        });
+    });
+}
+
+// Actualizar filtros de lista
+function carregarFiltrosCategorias() {
+    const filtroCat = document.getElementById('filtro-categoria');
+    if (!filtroCat) return;
+    db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
+        const val = filtroCat.value;
+        filtroCat.innerHTML = '<option value="">Todas as categorias</option>';
+        snap.forEach(doc => {
+            const c = doc.data();
+            filtroCat.innerHTML += `<option value="${c.nome}" ${c.nome === val ? 'selected' : ''}>${c.nome}</option>`;
+        });
+    });
+}
+
+function atualizarFiltroSubcategorias() {
+    const cat = document.getElementById('filtro-categoria')?.value;
+    const sel = document.getElementById('filtro-subcategoria');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Todas as subcategorias</option>';
+    if (!cat) return;
+
+    db.collection("subcategorias").get().then(snap => {
+        snap.forEach(doc => {
+            const s = doc.data();
+            if (s.pai === cat) sel.innerHTML += `<option value="${s.nome}">${s.nome}</option>`;
+        });
+    });
+}
+
+// ==========================================
+// 8. MODAL MOVER MÚSICA
+// ==========================================
+function abrirModalMover(id, titulo, tipoActual, subcatActual) {
+    document.getElementById('modal-musica-id').value   = id;
+    document.getElementById('modal-musica-nome').innerText = titulo;
+    document.getElementById('modal-mover').style.display = 'flex';
+
+    // Preencher select de categorias
+    const selTipo = document.getElementById('modal-tipo');
+    selTipo.innerHTML = '';
+    db.collection("categorias").orderBy("ordem").get().then(snap => {
+        snap.forEach(doc => {
+            const c = doc.data();
+            selTipo.innerHTML += `<option value="${c.nome}" ${c.nome === tipoActual ? 'selected' : ''}>${c.nome}</option>`;
+        });
+        // Preencher subcategorias do tipo actual
+        atualizarModalSubcategorias(subcatActual);
+    });
+}
+
+function fecharModalMover() {
+    document.getElementById('modal-mover').style.display = 'none';
+}
+
+function atualizarModalSubcategorias(subcatActual) {
+    const tipo = document.getElementById('modal-tipo')?.value;
+    const sel  = document.getElementById('modal-subcategoria');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Sem subcategoria</option>';
+    if (!tipo) return;
+
+    db.collection("subcategorias").get().then(snap => {
+        snap.forEach(doc => {
+            const s = doc.data();
+            if (s.pai === tipo) {
+                const selected = subcatActual && s.nome === subcatActual ? 'selected' : '';
+                sel.innerHTML += `<option value="${s.nome}" ${selected}>${s.nome}</option>`;
+            }
+        });
+    });
+}
+
+async function salvarMoverMusica() {
+    const id          = document.getElementById('modal-musica-id').value;
+    const novoTipo    = document.getElementById('modal-tipo').value;
+    const novaSub     = document.getElementById('modal-subcategoria').value;
+
+    if (!id || !novoTipo) return;
+
+    try {
+        await db.collection("playlist").doc(id).update({
+            tipo: novoTipo,
+            subcategoria: novaSub || ''
+        });
+        fecharModalMover();
+        showAdminToast('Faixa movida com sucesso!');
+        carregarMusicasAdmin();
+    } catch (e) {
+        showAdminToast('Erro ao mover: ' + e.message, 'erro');
+    }
 }
