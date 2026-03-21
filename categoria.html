@@ -37,8 +37,12 @@
 
             <div class="relative mb-6">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                <input type="text" id="search-cat" oninput="pesquisarNaCategoria()" placeholder="Pesquisar nesta categoria..."
-                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-xs outline-none focus:border-[#EF3C54] transition">
+                <input type="text" id="search-cat"
+                    oninput="pesquisarNaCategoria()"
+                    onkeydown="if(event.key==='Escape'){this.value=''; pesquisarNaCategoria();}"
+                    placeholder="Pesquisar faixa ou artista..."
+                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-xs outline-none focus:border-[#EF3C54] transition"
+                    autocomplete="off">
             </div>
 
             <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
