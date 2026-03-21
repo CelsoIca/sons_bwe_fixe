@@ -160,6 +160,12 @@ async function publicarMusicaAdmin() {
             duracaoSegundos = await detectarDuracaoAudio(urlMp3);
         } catch (_) { duracaoSegundos = 0; }
 
+        // Processar datas inseridas pelo admin
+        const dataProducaoInput  = document.getElementById('adm-data-producao')?.value;
+        const dataPublicacaoInput = document.getElementById('adm-data-publicacao')?.value;
+
+        const toTimestamp = (v) => v ? firebase.firestore.Timestamp.fromDate(new Date(v)) : null;
+
         await db.collection("playlist").add({
             titulo, artista, url: urlMp3,
             capa: urlFinalCapa, tipo,
@@ -168,7 +174,8 @@ async function publicarMusicaAdmin() {
             ordem: Date.now(),
             duracao: duracaoSegundos,
             visualizacoes: 0,
-            dataPublicacao: firebase.firestore.FieldValue.serverTimestamp(),
+            dataProducao:   toTimestamp(dataProducaoInput),
+            dataPublicacao: toTimestamp(dataPublicacaoInput) || firebase.firestore.FieldValue.serverTimestamp(),
             dataCriacao:    firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -181,6 +188,10 @@ async function publicarMusicaAdmin() {
         if (inputCapa) inputCapa.value = '';
         const subcatSel = document.getElementById('adm-subcategoria');
         if (subcatSel) { subcatSel.innerHTML = '<option value="">Sem subcategoria</option>'; }
+        const dataProd = document.getElementById('adm-data-producao');
+        const dataPub  = document.getElementById('adm-data-publicacao');
+        if (dataProd) dataProd.value = '';
+        if (dataPub)  dataPub.value  = '';
         carregarMusicasAdmin();
     } catch (e) {
         console.error(e);
@@ -219,10 +230,10 @@ function carregarMusicasAdmin() {
         }
         docs.forEach(doc => {
             const m   = doc.data();
-            const dur = fmtDuracao(m.duracao || 0);
-            const pub = m.dataPublicacao?.toDate ? fmtData(m.dataPublicacao.toDate()) : (m.dataCriacao?.toDate ? fmtData(m.dataCriacao.toDate()) : '—');
-            const cri = m.dataCriacao?.toDate ? fmtData(m.dataCriacao.toDate()) : '—';
-            const vis = (m.visualizacoes || 0).toLocaleString('pt-PT');
+            const dur  = fmtDuracao(m.duracao || 0);
+            const prod = m.dataProducao?.toDate   ? fmtData(m.dataProducao.toDate())   : '—';
+            const pub  = m.dataPublicacao?.toDate ? fmtData(m.dataPublicacao.toDate()) : (m.dataCriacao?.toDate ? fmtData(m.dataCriacao.toDate()) : '—');
+            const vis  = (m.visualizacoes || 0).toLocaleString('pt-PT');
 
             lista.innerHTML += `
                 <div class="glass rounded-[2rem] border border-white/5 hover:border-blue-500/20 transition overflow-hidden">
@@ -266,8 +277,12 @@ function carregarMusicasAdmin() {
                             <span>plays</span>
                         </div>
                         <div class="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase">
-                            <i class="fa-solid fa-calendar-plus text-emerald-400"></i>
-                            <span>${pub}</span>
+                            <i class="fa-solid fa-compact-disc text-gray-600"></i>
+                            <span>Prod: ${prod}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase">
+                            <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                            <span>Pub: ${pub}</span>
                         </div>
                         ${dur === '—' ? `
                         <button onclick="detectarEGuardarDuracao('${doc.id}', '${m.url}')"
