@@ -59,7 +59,7 @@
 
     <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-[150] hidden backdrop-blur-sm"></div>
 
-    <button id="open-menu" class="fixed top-6 right-6 z-[100] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg hover:scale-110 transition flex items-center justify-center">
+    <button id="open-menu" onclick="document.getElementById('side-menu').classList.remove('hidden')" class="fixed top-6 right-6 z-[100] w-12 h-12 bg-[#2E5EBE] rounded-full shadow-lg hover:scale-110 transition flex items-center justify-center">
         <i class="fa-solid fa-bars"></i>
     </button>
 
@@ -93,7 +93,7 @@
     </div>
 
     <div id="side-menu" class="fixed inset-0 z-[300] hidden">
-        <div id="close-menu" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div id="close-menu" onclick="document.getElementById('side-menu').classList.add('hidden')" class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
         <div class="absolute right-0 top-0 bottom-0 w-72 bg-[#020617] border-l border-white/10 p-8 flex flex-col shadow-2xl">
             <h3 class="font-black text-xl text-[#FBD8AB] mb-10 uppercase tracking-tighter">Menu</h3>
             <nav class="flex flex-col gap-6 font-bold text-sm uppercase">
