@@ -365,12 +365,123 @@ function carregarSubcategoriasNav() {
     }).catch(()=>{});
 }
 
-// Pesquisa
+// =============================================
+// 6. PESQUISA NA CATEGORIA / MODO TODAS
+// =============================================
+let _catSearchTimer = null;
+
 function pesquisarNaCategoria() {
-    const termo = document.getElementById('search-cat')?.value.trim().toLowerCase();
-    if (!CATEGORIA) return;
-    if (!termo) { renderizarListaVertical(catPlaylist); return; }
-    renderizarListaVertical(catPlaylist.filter(m =>
-        m.titulo.toLowerCase().includes(termo)||m.artista.toLowerCase().includes(termo)
-    ));
+    clearTimeout(_catSearchTimer);
+    _catSearchTimer = setTimeout(_fazerPesquisaCat, 200);
+}
+
+function _fazerPesquisaCat() {
+    const input = document.getElementById('search-cat');
+    if (!input) return;
+    const termo = input.value.trim().toLowerCase();
+
+    if (MODO_TODAS) {
+        // No modo accordion: filtrar todos os grupos
+        _pesquisarModoTodas(termo);
+        return;
+    }
+
+    if (!termo) {
+        renderizarListaVertical(catPlaylist);
+        _resetarIconePesquisa();
+        return;
+    }
+
+    const res = catPlaylist.filter(m =>
+        (m.titulo  || '').toLowerCase().includes(termo) ||
+        (m.artista || '').toLowerCase().includes(termo)
+    );
+    renderizarListaVertical(res);
+    _ativarIconePesquisa();
+}
+
+function _ativarIconePesquisa() {
+    const icon = document.querySelector('#search-cat + * .fa-magnifying-glass, .fa-magnifying-glass');
+    if (icon) icon.classList.add('text-[#EF3C54]');
+}
+function _resetarIconePesquisa() {
+    const icon = document.querySelector('.fa-magnifying-glass');
+    if (icon) icon.classList.remove('text-[#EF3C54]');
+}
+
+function _pesquisarModoTodas(termo) {
+    const grid = document.getElementById('grid-musicas');
+    if (!grid || !window._gruposAcc) return;
+
+    if (!termo) {
+        // Restaurar accordion original
+        renderizarTodasCategorias();
+        return;
+    }
+
+    // Mostrar resultados filtrados em lista simples
+    grid.className = 'space-y-3';
+    grid.innerHTML = '';
+    let totalEncontrado = 0;
+
+    Object.entries(window._gruposAcc).forEach(([nomeCat, grupo]) => {
+        const musicasFiltradas = grupo.musicas.filter(m =>
+            (m.titulo  || '').toLowerCase().includes(termo) ||
+            (m.artista || '').toLowerCase().includes(termo)
+        );
+        if (!musicasFiltradas.length) return;
+
+        totalEncontrado += musicasFiltradas.length;
+        const cat   = grupo.cat;
+        const icone = cat.icone || 'fa-music';
+        const cor   = COR_ICONE[icone] || 'text-blue-400';
+        const bg    = COR_BG[icone]    || 'bg-blue-500/20';
+
+        const bloco = document.createElement('div');
+        bloco.className = 'glass rounded-[1.5rem] border border-white/5 overflow-hidden';
+        bloco.innerHTML = `
+            <div class="px-5 py-3 bg-white/3 border-b border-white/5 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl ${bg} flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid ${icone} ${cor} text-xs"></i>
+                </div>
+                <span class="text-xs font-black text-white">${nomeCat}</span>
+                <span class="text-[9px] text-gray-600 font-bold">${musicasFiltradas.length} resultado${musicasFiltradas.length!==1?'s':''}</span>
+            </div>
+            <div class="divide-y divide-white/5">
+                ${musicasFiltradas.map((m, i) => {
+                    const dur  = fmtDur(m.duracao);
+                    const prod = fmtDataCurta(m.dataProducao);
+                    const pub  = fmtDataCurta(m.dataPublicacao || m.dataCriacao);
+                    const vis  = m.visualizacoes ? m.visualizacoes.toLocaleString('pt-PT') : null;
+                    return `
+                    <div class="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-white/5 transition faixa-acc"
+                         data-cat="${nomeCat}" data-idx="${grupo.musicas.indexOf(m)}" onclick="tocarDaListaGlobal(this)">
+                        <img src="${m.capa||'assets/default.png'}" class="w-10 h-10 rounded-xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
+                        <div class="flex-1 overflow-hidden">
+                            <p class="text-xs font-black text-white truncate">${m.titulo}</p>
+                            <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
+                            <div class="flex items-center gap-3 mt-1 flex-wrap">
+                                ${dur  ? `<span class="text-[8px] text-gray-600 font-bold flex items-center gap-1"><i class="fa-solid fa-clock text-[#EF3C54]"></i>${dur}</span>` : ''}
+                                ${vis  ? `<span class="text-[8px] text-gray-600 font-bold flex items-center gap-1"><i class="fa-solid fa-eye text-[#2E5EBE]"></i>${vis}</span>` : ''}
+                                ${prod ? `<span class="text-[8px] text-gray-600 font-bold flex items-center gap-1"><i class="fa-solid fa-compact-disc text-gray-700"></i>${prod}</span>` : ''}
+                                ${pub  ? `<span class="text-[8px] text-gray-600 font-bold flex items-center gap-1"><i class="fa-solid fa-calendar-check text-emerald-600"></i>${pub}</span>` : ''}
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-play text-[#EF3C54] text-xs flex-shrink-0"></i>
+                    </div>`;
+                }).join('')}
+            </div>`;
+        grid.appendChild(bloco);
+    });
+
+    if (!totalEncontrado) {
+        grid.innerHTML = `
+            <div class="text-center py-16">
+                <i class="fa-solid fa-magnifying-glass text-4xl text-gray-700 mb-4"></i>
+                <p class="text-gray-600 font-black uppercase text-xs tracking-widest">Nenhum resultado para "${termo}"</p>
+            </div>`;
+    }
+
+    const count = document.getElementById('cat-count');
+    if (count) count.innerText = `${totalEncontrado} resultado${totalEncontrado!==1?'s':''}`;
 }
