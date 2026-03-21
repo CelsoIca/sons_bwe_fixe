@@ -119,26 +119,49 @@
                 <div id="adm-lista-musicas" class="grid md:grid-cols-2 gap-4 mb-12"></div>
 
                 <!-- Modal: Mover/Editar música -->
-                <div id="modal-mover" class="fixed inset-0 z-[700] bg-black/90 backdrop-blur-md hidden items-center justify-center p-6" style="display:none">
+                <!-- Modal Mover — fora do fluxo, controlado por JS -->
+                <div id="modal-mover" class="fixed inset-0 z-[700] bg-black/90 backdrop-blur-md items-center justify-center p-6" style="display:none">
                     <div class="glass w-full max-w-md p-8 rounded-[3rem] border border-white/10 relative shadow-2xl">
-                        <button onclick="fecharModalMover()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
-                        <h2 class="text-lg font-black mb-1">Mover / Editar Faixa</h2>
-                        <p id="modal-musica-nome" class="text-xs text-gray-500 mb-6 truncate">—</p>
+                        <button onclick="fecharModalMover()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+
+                        <!-- Info da música -->
+                        <div class="flex items-center gap-4 mb-6">
+                            <img id="modal-musica-capa" src="assets/default.png" class="w-14 h-14 rounded-2xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
+                            <div class="overflow-hidden">
+                                <h2 class="text-base font-black text-white truncate" id="modal-musica-nome">—</h2>
+                                <p id="modal-musica-artista" class="text-[9px] text-gray-500 uppercase font-bold truncate">—</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-[8px] text-gray-600 font-bold uppercase">Actual:</span>
+                                    <span id="modal-musica-actual" class="text-[8px] text-[#EF3C54] font-black uppercase">—</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <input type="hidden" id="modal-musica-id">
+
                         <div class="space-y-4">
                             <div class="space-y-1">
-                                <label class="text-[9px] font-black text-gray-500 uppercase">Categoria</label>
-                                <select id="modal-tipo" onchange="atualizarModalSubcategorias()" class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition"></select>
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Nova Categoria</label>
+                                <select id="modal-tipo" onchange="atualizarModalSubcategorias()"
+                                    class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
+                                </select>
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[9px] font-black text-gray-500 uppercase">Subcategoria</label>
-                                <select id="modal-subcategoria" class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Subcategoria <span class="text-gray-700">(opcional)</span></label>
+                                <select id="modal-subcategoria"
+                                    class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
                                     <option value="">Sem subcategoria</option>
                                 </select>
                             </div>
                         </div>
-                        <button onclick="salvarMoverMusica()" class="w-full mt-6 bg-[#2E5EBE] py-4 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition">
-                            <i class="fa-solid fa-check mr-2"></i>GUARDAR ALTERAÇÕES
+
+                        <div id="modal-mover-feedback" class="hidden mt-4 p-3 rounded-xl text-xs font-black uppercase text-center"></div>
+
+                        <button onclick="salvarMoverMusica()" id="btn-salvar-mover"
+                            class="w-full mt-5 bg-[#2E5EBE] py-4 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition shadow-lg shadow-blue-500/20">
+                            <i class="fa-solid fa-arrows-up-down-left-right mr-2"></i>MOVER FAIXA
                         </button>
                     </div>
                 </div>
