@@ -151,54 +151,147 @@ function musicaAnterior() {
 }
 
 // 5. PESQUISA NA SIDEBAR
+// Debounce para não pesquisar a cada tecla
+let _searchTimer = null;
+
 function executarPesquisa() {
+    _toggleClearBtn();
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(_fazerPesquisa, 200);
+}
+
+function _fazerPesquisa() {
     const input      = document.getElementById('search-input');
     const resultsDiv = document.getElementById('search-results');
     const icon       = document.getElementById('search-icon');
     if (!input || !resultsDiv) return;
 
     const termo = input.value.trim().toLowerCase();
+
+    // Limpar pesquisa
     if (!termo) {
         resultsDiv.classList.add('hidden');
+        resultsDiv.innerHTML = '';
         if (icon) icon.classList.remove('text-[#EF3C54]');
         return;
     }
 
+    // Se playlist ainda não carregou do Firebase
+    if (!playlistOriginal.length) {
+        resultsDiv.classList.remove('hidden');
+        resultsDiv.innerHTML = '<p class="text-xs text-gray-600 text-center py-4 italic">A carregar músicas...</p>';
+        return;
+    }
+
     const res = playlistOriginal.filter(m =>
-        m.titulo.toLowerCase().includes(termo) || m.artista.toLowerCase().includes(termo)
+        (m.titulo  || '').toLowerCase().includes(termo) ||
+        (m.artista || '').toLowerCase().includes(termo) ||
+        (m.tipo    || '').toLowerCase().includes(termo)
     );
 
     if (icon) icon.classList.add('text-[#EF3C54]');
     resultsDiv.classList.remove('hidden');
-    resultsDiv.innerHTML = '<p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Resultados</p>';
+    resultsDiv.innerHTML = `
+        <div class="flex items-center justify-between mb-3 px-1">
+            <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                ${res.length} resultado${res.length !== 1 ? 's' : ''}
+            </p>
+            <button onclick="limparPesquisa()" class="text-[9px] text-gray-600 hover:text-white transition uppercase font-bold">
+                Limpar
+            </button>
+        </div>`;
 
     if (!res.length) {
-        resultsDiv.innerHTML += `<p class="text-xs text-gray-600 text-center py-4">Nenhum resultado.</p>`;
+        resultsDiv.innerHTML += `
+            <div class="text-center py-6">
+                <i class="fa-solid fa-magnifying-glass text-gray-700 text-2xl mb-2"></i>
+                <p class="text-xs text-gray-600">Nenhum resultado para "<strong class="text-gray-400">${termo}</strong>"</p>
+            </div>`;
         return;
     }
 
     res.forEach(m => {
+        const dur = m.duracao ? (() => { const min=Math.floor(m.duracao/60),sec=Math.floor(m.duracao%60); return `${min}:${sec<10?'0':''}${sec}`; })() : '';
         resultsDiv.innerHTML += `
             <div onclick="selecionarMusica('${m.id}')"
-                class="bg-white/5 p-3 rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-white/10 transition border border-white/5 hover:border-[#EF3C54]/20">
-                <img src="${m.capa || 'assets/default.png'}" class="w-8 h-8 rounded-lg object-cover flex-shrink-0" onerror="this.src='assets/default.png'">
-                <div class="flex-1 overflow-hidden">
-                    <p class="text-xs font-bold text-white truncate">${m.titulo}</p>
-                    <p class="text-[9px] text-gray-500 uppercase truncate">${m.artista}</p>
+                class="group bg-white/5 p-3 rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-white/10 active:scale-95 transition border border-white/5 hover:border-[#EF3C54]/30">
+                <div class="relative flex-shrink-0">
+                    <img src="${m.capa || 'assets/default.png'}" class="w-10 h-10 rounded-xl object-cover" onerror="this.src='assets/default.png'">
+                    <div class="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <i class="fa-solid fa-play text-white text-xs"></i>
+                    </div>
                 </div>
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-xs font-black text-white truncate">${_highlight(m.titulo, termo)}</p>
+                    <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${_highlight(m.artista, termo)}</p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-[8px] text-[#2E5EBE] font-bold uppercase">${m.tipo || ''}</span>
+                        ${dur ? `<span class="text-[8px] text-gray-600 font-bold">${dur}</span>` : ''}
+                    </div>
+                </div>
+                <i class="fa-solid fa-play text-[#EF3C54] text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition"></i>
             </div>`;
     });
+}
+
+// Highlight do termo pesquisado no texto (sem regex)
+function _highlight(text, termo) {
+    if (!text || !termo) return text || '';
+    const idx = text.toLowerCase().indexOf(termo.toLowerCase());
+    if (idx === -1) return text;
+    return text.slice(0, idx)
+        + '<mark class="bg-[#EF3C54]/30 text-white rounded px-0.5">'
+        + text.slice(idx, idx + termo.length)
+        + '</mark>'
+        + text.slice(idx + termo.length);
+}
+
+function limparPesquisa() {
+    const input      = document.getElementById('search-input');
+    const resultsDiv = document.getElementById('search-results');
+    const icon       = document.getElementById('search-icon');
+    const clearBtn   = document.getElementById('clear-search-btn');
+    if (input)      input.value = '';
+    if (resultsDiv) { resultsDiv.classList.add('hidden'); resultsDiv.innerHTML = ''; }
+    if (icon)       icon.classList.remove('text-[#EF3C54]');
+    if (clearBtn)   clearBtn.classList.add('hidden');
+    if (input)      input.focus();
+}
+
+// Mostrar/esconder botão X conforme há texto
+function _toggleClearBtn() {
+    const input    = document.getElementById('search-input');
+    const clearBtn = document.getElementById('clear-search-btn');
+    if (!input || !clearBtn) return;
+    if (input.value.trim()) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
 }
 
 function selecionarMusica(id) {
     const idx = playlistOriginal.findIndex(m => m.id === id);
     if (idx === -1) return;
+
     playlist = [...playlistOriginal];
-    renderizarMusica(idx);
-    audio.play();
-    if (playBtn) { playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; playBtn.classList.add('animate-pulse-pink'); }
-    if (typeof mostrarSlideshowOuCapa === 'function') mostrarSlideshowOuCapa(true);
-    toggleSidebar();
+
+    // Só toca se o player existir na página
+    if (audio) {
+        renderizarMusica(idx);
+        audio.play().catch(() => {});
+        if (playBtn) {
+            playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            playBtn.classList.add('animate-pulse-pink');
+        }
+        if (typeof mostrarSlideshowOuCapa === 'function') mostrarSlideshowOuCapa(true);
+    }
+
+    limparPesquisa();
+
+    // Só fechar sidebar em mobile (desktop fica sempre aberta)
+    const sidebar = document.getElementById('sidebar');
+    const isMobile = window.innerWidth < 768;
+    if (isMobile && sidebar && !sidebar.classList.contains('-translate-x-full')) {
+        toggleSidebar();
+    }
 }
 
 function filtrarCategoria(cat, btn) {
