@@ -238,13 +238,20 @@ async function uploadParaImgBB(file) {
     } catch { return null; }
 }
 
-// 8. REGISTAR PLAY
+// 8. REGISTAR PLAY — actualiza estatísticas do utilizador + contador global da música
 async function registarPlay(musicaId) {
-    const user = auth.currentUser;
-    if (!user || !musicaId) return;
+    if (!musicaId) return;
     try {
+        // Contador global de visualizações na própria música
+        db.collection("playlist").doc(musicaId).update({
+            visualizacoes: firebase.firestore.FieldValue.increment(1)
+        }).catch(() => {}); // silencioso se falhar permissões
+
+        // Estatísticas por utilizador (só se estiver autenticado)
+        const user = auth.currentUser;
+        if (!user) return;
         await db.collection("users").doc(user.uid).collection("estatisticas").doc(musicaId).set({
-            plays: firebase.firestore.FieldValue.increment(1),
+            plays:       firebase.firestore.FieldValue.increment(1),
             ultimoOuvido: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
     } catch { /* silencioso */ }
