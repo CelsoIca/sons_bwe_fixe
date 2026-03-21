@@ -67,6 +67,55 @@ function showAdminToast(msg, tipo) {
 }
 
 // ==========================================
+// UTILITÁRIOS DE FAIXAS
+// ==========================================
+
+// Formatar duração em segundos → M:SS
+function fmtDuracao(seg) {
+    if (!seg || seg <= 0) return '—';
+    const m = Math.floor(seg / 60);
+    const s = Math.floor(seg % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+// Formatar timestamp Firestore → DD/MM/AAAA
+function fmtData(date) {
+    if (!date) return '—';
+    return date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// Detectar duração de um MP3 via URL (carrega em background)
+function detectarDuracaoAudio(url) {
+    return new Promise((resolve) => {
+        const a = new Audio();
+        const timeout = setTimeout(() => resolve(0), 8000); // máx 8s
+        a.addEventListener('loadedmetadata', () => {
+            clearTimeout(timeout);
+            resolve(Math.round(a.duration) || 0);
+        });
+        a.addEventListener('error', () => { clearTimeout(timeout); resolve(0); });
+        a.src = url;
+        a.load();
+    });
+}
+
+// Botão "detectar duração" para músicas já publicadas sem duração
+async function detectarEGuardarDuracao(id, url) {
+    showAdminToast('A detectar duração...');
+    try {
+        const dur = await detectarDuracaoAudio(url);
+        if (dur > 0) {
+            await db.collection("playlist").doc(id).update({ duracao: dur });
+            showAdminToast(`Duração detectada: ${fmtDuracao(dur)}`);
+        } else {
+            showAdminToast('Não foi possível detectar. URL inválido?', 'erro');
+        }
+    } catch (e) {
+        showAdminToast('Erro ao detectar duração.', 'erro');
+    }
+}
+
+// ==========================================
 // 2. PUBLICAR MÚSICA
 // ==========================================
 async function publicarMusicaAdmin() {
@@ -104,13 +153,23 @@ async function publicarMusicaAdmin() {
 
         const subcategoria = document.getElementById('adm-subcategoria')?.value || '';
 
+        // Detectar duração do MP3 automaticamente
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A DETECTAR DURAÇÃO...';
+        let duracaoSegundos = 0;
+        try {
+            duracaoSegundos = await detectarDuracaoAudio(urlMp3);
+        } catch (_) { duracaoSegundos = 0; }
+
         await db.collection("playlist").add({
             titulo, artista, url: urlMp3,
             capa: urlFinalCapa, tipo,
-            subcategoria: subcategoria,
+            subcategoria,
             oculto: false,
             ordem: Date.now(),
-            dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+            duracao: duracaoSegundos,
+            visualizacoes: 0,
+            dataPublicacao: firebase.firestore.FieldValue.serverTimestamp(),
+            dataCriacao:    firebase.firestore.FieldValue.serverTimestamp()
         });
 
         showAdminToast("✅ Música publicada com sucesso!");
@@ -159,31 +218,62 @@ function carregarMusicasAdmin() {
             return;
         }
         docs.forEach(doc => {
-            const m = doc.data();
+            const m   = doc.data();
+            const dur = fmtDuracao(m.duracao || 0);
+            const pub = m.dataPublicacao?.toDate ? fmtData(m.dataPublicacao.toDate()) : (m.dataCriacao?.toDate ? fmtData(m.dataCriacao.toDate()) : '—');
+            const cri = m.dataCriacao?.toDate ? fmtData(m.dataCriacao.toDate()) : '—';
+            const vis = (m.visualizacoes || 0).toLocaleString('pt-PT');
+
             lista.innerHTML += `
-                <div class="glass p-5 rounded-[2rem] border border-white/5 flex items-center gap-4 hover:border-blue-500/20 transition">
-                    <img src="${m.capa || 'assets/default.png'}" class="w-14 h-14 rounded-2xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
-                    <div class="flex-1 overflow-hidden">
-                        <h4 class="font-black text-sm text-white truncate">${m.titulo}</h4>
-                        <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
-                        <div class="flex items-center gap-2 mt-1 flex-wrap">
-                            <span class="text-[8px] font-black ${m.oculto ? 'text-red-400' : 'text-emerald-400'} uppercase">${m.oculto ? 'OCULTO' : 'VISÍVEL'}</span>
-                            <a href="categoria.html?tipo=${encodeURIComponent(m.tipo || '')}" target="_blank"
-                               class="text-[8px] font-black text-[#2E5EBE] hover:underline uppercase">${m.tipo || '—'} ↗</a>
-                            ${m.subcategoria ? `<span class="text-[8px] font-black text-purple-400 uppercase">${m.subcategoria}</span>` : ''}
+                <div class="glass rounded-[2rem] border border-white/5 hover:border-blue-500/20 transition overflow-hidden">
+                    <!-- Linha principal -->
+                    <div class="p-5 flex items-center gap-4">
+                        <img src="${m.capa || 'assets/default.png'}" class="w-14 h-14 rounded-2xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
+                        <div class="flex-1 overflow-hidden">
+                            <h4 class="font-black text-sm text-white truncate">${m.titulo}</h4>
+                            <p class="text-[9px] text-gray-500 uppercase font-bold truncate">${m.artista}</p>
+                            <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                <span class="text-[8px] font-black ${m.oculto ? 'text-red-400' : 'text-emerald-400'} uppercase">${m.oculto ? 'OCULTO' : 'VISÍVEL'}</span>
+                                <a href="categoria.html?tipo=${encodeURIComponent(m.tipo || '')}" target="_blank"
+                                   class="text-[8px] font-black text-[#2E5EBE] hover:underline uppercase">${m.tipo || '—'} ↗</a>
+                                ${m.subcategoria ? `<span class="text-[8px] font-black text-purple-400 uppercase">${m.subcategoria}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2 flex-shrink-0">
+                            <button onclick="abrirModalMover('${doc.id}')"
+                                class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center hover:bg-blue-500/20 transition" title="Mover">
+                                <i class="fa-solid fa-arrows-up-down-left-right text-xs text-blue-400"></i>
+                            </button>
+                            <button onclick="toggleOcultarMusica('${doc.id}', ${m.oculto})"
+                                class="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition" title="${m.oculto ? 'Mostrar' : 'Ocultar'}">
+                                <i class="fa-solid ${m.oculto ? 'fa-eye' : 'fa-eye-slash'} text-xs text-gray-400"></i>
+                            </button>
+                            <button onclick="apagarMusica('${doc.id}')"
+                                class="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition" title="Apagar">
+                                <i class="fa-solid fa-trash-can text-xs text-red-500"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="abrirModalMover('${doc.id}','${(m.titulo||'').replace(/'/g,"\'")}','${m.tipo||''}','${m.subcategoria||''}')"
-                            class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center hover:bg-blue-500/20 transition" title="Mover / Editar">
-                            <i class="fa-solid fa-arrows-up-down-left-right text-xs text-blue-400"></i>
-                        </button>
-                        <button onclick="toggleOcultarMusica('${doc.id}', ${m.oculto})" class="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition" title="${m.oculto ? 'Mostrar' : 'Ocultar'}">
-                            <i class="fa-solid ${m.oculto ? 'fa-eye' : 'fa-eye-slash'} text-xs text-gray-400"></i>
-                        </button>
-                        <button onclick="apagarMusica('${doc.id}')" class="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition">
-                            <i class="fa-solid fa-trash-can text-xs text-red-500"></i>
-                        </button>
+                    <!-- Barra de detalhes -->
+                    <div class="px-5 pb-4 flex items-center gap-4 flex-wrap border-t border-white/5 pt-3">
+                        <div class="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase">
+                            <i class="fa-solid fa-clock text-[#EF3C54]"></i>
+                            <span class="text-white">${dur}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase">
+                            <i class="fa-solid fa-eye text-[#2E5EBE]"></i>
+                            <span class="text-white">${vis}</span>
+                            <span>plays</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[9px] text-gray-500 font-bold uppercase">
+                            <i class="fa-solid fa-calendar-plus text-emerald-400"></i>
+                            <span>${pub}</span>
+                        </div>
+                        ${dur === '—' ? `
+                        <button onclick="detectarEGuardarDuracao('${doc.id}', '${m.url}')"
+                            class="ml-auto text-[8px] text-gray-600 hover:text-blue-400 font-bold uppercase transition flex items-center gap-1" title="Detectar duração">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> detectar duração
+                        </button>` : ''}
                     </div>
                 </div>`;
         });
@@ -776,63 +866,154 @@ function atualizarFiltroSubcategorias() {
 // ==========================================
 // 8. MODAL MOVER MÚSICA
 // ==========================================
-function abrirModalMover(id, titulo, tipoActual, subcatActual) {
-    document.getElementById('modal-musica-id').value   = id;
-    document.getElementById('modal-musica-nome').innerText = titulo;
-    document.getElementById('modal-mover').style.display = 'flex';
 
-    // Preencher select de categorias
-    const selTipo = document.getElementById('modal-tipo');
-    selTipo.innerHTML = '';
-    db.collection("categorias").orderBy("ordem").get().then(snap => {
-        snap.forEach(doc => {
-            const c = doc.data();
-            selTipo.innerHTML += `<option value="${c.nome}" ${c.nome === tipoActual ? 'selected' : ''}>${c.nome}</option>`;
-        });
-        // Preencher subcategorias do tipo actual
-        atualizarModalSubcategorias(subcatActual);
-    });
+// Armazena dados da música em aberto (evita problemas com aspas/caracteres especiais)
+let _musicaEmEdicao = null;
+
+// Abre o modal com os dados da música (recebe o ID, busca dados do Firebase)
+async function abrirModalMover(id) {
+    const modal = document.getElementById('modal-mover');
+    if (!modal) return;
+
+    // Mostrar modal com loading
+    modal.style.display = 'flex';
+    document.getElementById('modal-musica-id').value = id;
+    document.getElementById('modal-musica-nome').innerText    = 'A carregar...';
+    document.getElementById('modal-musica-artista').innerText = '';
+    document.getElementById('modal-musica-actual').innerText  = '';
+    document.getElementById('modal-mover-feedback').classList.add('hidden');
+
+    const btn = document.getElementById('btn-salvar-mover');
+    if (btn) btn.disabled = true;
+
+    try {
+        // Buscar dados actuais da música
+        const doc = await db.collection("playlist").doc(id).get();
+        if (!doc.exists) { fecharModalMover(); return; }
+
+        const m = doc.data();
+        _musicaEmEdicao = { id, ...m };
+
+        // Preencher info visual
+        document.getElementById('modal-musica-nome').innerText    = m.titulo || '—';
+        document.getElementById('modal-musica-artista').innerText = m.artista || '—';
+        document.getElementById('modal-musica-actual').innerText  =
+            [m.tipo, m.subcategoria].filter(Boolean).join(' › ') || 'Sem categoria';
+
+        const capaEl = document.getElementById('modal-musica-capa');
+        if (capaEl) capaEl.src = m.capa || 'assets/default.png';
+
+        // Preencher select de categorias
+        const selTipo = document.getElementById('modal-tipo');
+        selTipo.innerHTML = '';
+
+        const catsSnap = await db.collection("categorias").orderBy("ordem").get();
+        if (catsSnap.empty) {
+            // Fallback: categorias padrão
+            ['Album','EP','Single','Mixtape'].forEach(n => {
+                selTipo.innerHTML += `<option value="${n}" ${n === m.tipo ? 'selected' : ''}>${n}</option>`;
+            });
+        } else {
+            catsSnap.forEach(catDoc => {
+                const c = catDoc.data();
+                selTipo.innerHTML += `<option value="${c.nome}" ${c.nome === m.tipo ? 'selected' : ''}>${c.nome}</option>`;
+            });
+        }
+
+        // Preencher subcategorias
+        await atualizarModalSubcategorias(m.subcategoria || '');
+
+        if (btn) btn.disabled = false;
+
+    } catch (e) {
+        console.error("Erro ao abrir modal mover:", e);
+        document.getElementById('modal-musica-nome').innerText = 'Erro ao carregar';
+        if (btn) btn.disabled = false;
+    }
 }
 
 function fecharModalMover() {
-    document.getElementById('modal-mover').style.display = 'none';
+    const modal = document.getElementById('modal-mover');
+    if (modal) modal.style.display = 'none';
+    _musicaEmEdicao = null;
 }
 
-function atualizarModalSubcategorias(subcatActual) {
+// Fecha o modal ao clicar fora da caixa branca
+document.addEventListener('click', e => {
+    const modal = document.getElementById('modal-mover');
+    if (modal && e.target === modal) fecharModalMover();
+});
+
+async function atualizarModalSubcategorias(subcatActual) {
     const tipo = document.getElementById('modal-tipo')?.value;
     const sel  = document.getElementById('modal-subcategoria');
     if (!sel) return;
     sel.innerHTML = '<option value="">Sem subcategoria</option>';
     if (!tipo) return;
 
-    db.collection("subcategorias").get().then(snap => {
+    try {
+        const snap = await db.collection("subcategorias").get();
+        let found = false;
         snap.forEach(doc => {
             const s = doc.data();
             if (s.pai === tipo) {
+                found = true;
                 const selected = subcatActual && s.nome === subcatActual ? 'selected' : '';
                 sel.innerHTML += `<option value="${s.nome}" ${selected}>${s.nome}</option>`;
             }
         });
-    });
+        if (!found) {
+            sel.innerHTML = '<option value="">Sem subcategorias nesta categoria</option>';
+        }
+    } catch (e) {
+        sel.innerHTML = '<option value="">Erro ao carregar</option>';
+    }
 }
 
 async function salvarMoverMusica() {
-    const id          = document.getElementById('modal-musica-id').value;
-    const novoTipo    = document.getElementById('modal-tipo').value;
-    const novaSub     = document.getElementById('modal-subcategoria').value;
+    const id       = document.getElementById('modal-musica-id').value;
+    const novoTipo = document.getElementById('modal-tipo').value;
+    const novaSub  = document.getElementById('modal-subcategoria').value;
+    const btn      = document.getElementById('btn-salvar-mover');
+    const feedback = document.getElementById('modal-mover-feedback');
 
-    if (!id || !novoTipo) return;
+    if (!id || !novoTipo) {
+        feedback.className = 'mt-4 p-3 rounded-xl text-xs font-black uppercase text-center bg-red-500/10 text-red-400';
+        feedback.innerText = 'Selecciona uma categoria!';
+        feedback.classList.remove('hidden');
+        return;
+    }
+
+    const textoOrig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>A MOVER...';
+    feedback.classList.add('hidden');
 
     try {
         await db.collection("playlist").doc(id).update({
-            tipo: novoTipo,
+            tipo:         novoTipo,
             subcategoria: novaSub || ''
         });
-        fecharModalMover();
-        showAdminToast('Faixa movida com sucesso!');
-        carregarMusicasAdmin();
+
+        // Feedback de sucesso no modal
+        const destino = [novoTipo, novaSub].filter(Boolean).join(' › ');
+        feedback.className = 'mt-4 p-3 rounded-xl text-xs font-black uppercase text-center bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        feedback.innerText = `✓ Movida para ${destino}`;
+        feedback.classList.remove('hidden');
+
+        // Fechar modal após 1.2s
+        setTimeout(() => {
+            fecharModalMover();
+            showAdminToast(`Faixa movida para "${destino}"!`);
+        }, 1200);
+
     } catch (e) {
-        showAdminToast('Erro ao mover: ' + e.message, 'erro');
+        console.error("Erro ao mover:", e);
+        feedback.className = 'mt-4 p-3 rounded-xl text-xs font-black uppercase text-center bg-red-500/10 text-red-400';
+        feedback.innerText = 'Erro: ' + e.message;
+        feedback.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = textoOrig;
     }
 }
 
