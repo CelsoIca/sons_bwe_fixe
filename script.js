@@ -1,283 +1,440 @@
-// =============================================
-// SCRIPT.JS — Core da aplicação Sons Bwé Fixe
-// Firebase init + player + auth + utilitários
-// =============================================
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel General | Sons Bwé Fixe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#020617] text-white flex h-screen overflow-hidden">
 
-// 1. FIREBASE
-const firebaseConfig = {
-    apiKey:            "AIzaSyBhZrKmbz3UKEfjdBlc9OI3lh1y9_OG5aw",
-    authDomain:        "sons-bwe-fixes-a543b.firebaseapp.com",
-    projectId:         "sons-bwe-fixes-a543b",
-    storageBucket:     "sons-bwe-fixes-a543b.firebasestorage.app",
-    messagingSenderId: "25559012829",
-    appId:             "1:25559012829:web:ce469fbf416d8d8d975234"
-};
+    <!-- Overlay de Acesso Negado -->
+    <div id="error-overlay" class="fixed inset-0 z-[1000] bg-[#EF3C54] flex flex-col items-center justify-center text-center p-6 hidden">
+        <i class="fa-solid fa-triangle-exclamation text-7xl text-white mb-6 animate-bounce"></i>
+        <h1 class="text-4xl font-black mb-2">ACESSO RESTRITO</h1>
+        <p class="mb-8 text-white/80">Área exclusiva para o General.</p>
+        <button onclick="window.location.href='index.html'" class="bg-white text-[#EF3C54] px-8 py-4 rounded-2xl font-black hover:scale-105 transition">VOLTAR</button>
+    </div>
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+    <!-- Conteúdo Admin (escondido até verificação) -->
+    <div id="admin-content" class="hidden w-full flex h-screen overflow-hidden">
 
-// Activar cache offline do Firestore (melhora performance)
-db.settings({ experimentalForceLongPolling: false });
+        <!-- Sidebar -->
+        <aside class="w-72 bg-[#020617] border-r border-white/5 flex flex-col p-6 h-full z-[100] flex-shrink-0">
+            <div class="mb-10 px-2 text-center">
+                <h1 class="text-xl font-black uppercase text-[#EF3C54]">Sons Bwé Fixe</h1>
+                <p class="text-[9px] text-gray-600 font-bold uppercase tracking-[0.3em]">Painel do General</p>
+            </div>
 
-const IMGBB_API_KEY = 'b0f9a034a766f6b052c4b537e0b1d2e6';
-
-// 2. VARIÁVEIS GLOBAIS DO PLAYER
-let playlist         = [];
-let playlistOriginal = [];
-let indexMusica      = 0;
-
-// Elementos do player (null em páginas sem player — protegido abaixo)
-const audio       = document.getElementById('main-audio');
-const playBtn     = document.getElementById('play-btn');
-const progressBar = document.getElementById('progress-bar');
-const mainCover   = document.getElementById('main-cover');
-const partyLights = document.getElementById('party-lights');
-const currentTimeEl = document.getElementById('current-time');
-const durationTimeEl = document.getElementById('duration-time');
-
-// 3. AUTH — estado do utilizador
-auth.onAuthStateChanged(user => {
-    const linkLogin  = document.getElementById('link-login');
-    const btnLogout  = document.getElementById('btn-logout');
-    const linkAdmin  = document.getElementById('link-admin');
-
-    if (user) {
-        if (linkLogin) linkLogin.classList.add('hidden');
-        if (btnLogout) btnLogout.classList.remove('hidden');
-
-        db.collection("users").doc(user.uid).onSnapshot(doc => {
-            const data = doc.data();
-            if (!data) return;
-            if (data.ativo === false) {
-                alert("A tua conta foi desativada.");
-                auth.signOut().then(() => window.location.href = "index.html");
-                return;
-            }
-            if (data.role === 'admin' && linkAdmin) {
-                linkAdmin.classList.remove('hidden');
-            }
-        });
-    } else {
-        if (linkLogin) linkLogin.classList.remove('hidden');
-        if (btnLogout) btnLogout.classList.add('hidden');
-        if (linkAdmin) linkAdmin.classList.add('hidden');
-    }
-});
-
-// 4. PLAYER — só inicializa se existir na página
-if (audio) {
-    db.collection("playlist")
-        .where("oculto", "==", false)
-        .orderBy("ordem", "desc")
-        .onSnapshot(snap => {
-            playlist         = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            playlistOriginal = [...playlist];
-
-            if (typeof renderizarListaFaixas === 'function') renderizarListaFaixas();
-            if (typeof mostrarSlideshowOuCapa === 'function' && (!audio.src || audio.paused)) {
-                mostrarSlideshowOuCapa(false);
-            }
-            if (playlist.length > 0 && !audio.src) renderizarMusica(0);
-        });
-
-    audio.ontimeupdate = () => {
-        if (!isNaN(audio.duration) && audio.duration > 0) {
-            const pct = (audio.currentTime / audio.duration) * 100;
-            if (progressBar) progressBar.value = pct;
-            if (currentTimeEl)  currentTimeEl.innerText  = fmt(audio.currentTime);
-            if (durationTimeEl) durationTimeEl.innerText = fmt(audio.duration);
-        }
-    };
-
-    if (progressBar) {
-        progressBar.oninput = () => {
-            audio.currentTime = (progressBar.value / 100) * audio.duration;
-        };
-    }
-    audio.onended = () => proximaMusica();
-}
-
-function renderizarMusica(i) {
-    if (!playlist.length) return;
-    indexMusica = i;
-    const m = playlist[i];
-
-    const titleEl  = document.getElementById('main-title');
-    const artistEl = document.getElementById('main-artist');
-    if (titleEl)  titleEl.innerText  = m.titulo;
-    if (artistEl) artistEl.innerText = m.artista;
-    audio.src = m.url;
-
-    if (m.capa && m.capa.trim()) {
-        if (mainCover)   { mainCover.src = m.capa; mainCover.classList.remove('hidden'); }
-        if (partyLights) partyLights.classList.add('hidden');
-    } else {
-        if (mainCover)   mainCover.classList.add('hidden');
-        if (partyLights) { partyLights.classList.remove('hidden'); partyLights.classList.add('animate-party'); }
-    }
-
-    if (typeof atualizarFaixaAtiva === 'function') atualizarFaixaAtiva(i);
-}
-
-function togglePlay() {
-    if (!audio || !audio.src) return;
-    if (audio.paused) {
-        audio.play();
-        if (playBtn) { playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; playBtn.classList.add('animate-pulse-pink'); }
-        registarPlay(playlist[indexMusica]?.id);
-        if (typeof mostrarSlideshowOuCapa === 'function') mostrarSlideshowOuCapa(true);
-    } else {
-        audio.pause();
-        if (playBtn) { playBtn.innerHTML = '<i class="fa-solid fa-play"></i>'; playBtn.classList.remove('animate-pulse-pink'); }
-        if (typeof mostrarSlideshowOuCapa === 'function') mostrarSlideshowOuCapa(false);
-    }
-}
-
-function proximaMusica() {
-    if (!playlist.length) return;
-    indexMusica = (indexMusica + 1) % playlist.length;
-    renderizarMusica(indexMusica);
-    audio.play();
-    if (playBtn) { playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; playBtn.classList.add('animate-pulse-pink'); }
-}
-
-function musicaAnterior() {
-    if (!playlist.length) return;
-    indexMusica = (indexMusica - 1 + playlist.length) % playlist.length;
-    renderizarMusica(indexMusica);
-    audio.play();
-    if (playBtn) { playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; playBtn.classList.add('animate-pulse-pink'); }
-}
-
-// 5. PESQUISA NA SIDEBAR
-function executarPesquisa() {
-    const input      = document.getElementById('search-input');
-    const resultsDiv = document.getElementById('search-results');
-    const icon       = document.getElementById('search-icon');
-    if (!input || !resultsDiv) return;
-
-    const termo = input.value.trim().toLowerCase();
-    if (!termo) {
-        resultsDiv.classList.add('hidden');
-        if (icon) icon.classList.remove('text-[#EF3C54]');
-        return;
-    }
-
-    const res = playlistOriginal.filter(m =>
-        m.titulo.toLowerCase().includes(termo) || m.artista.toLowerCase().includes(termo)
-    );
-
-    if (icon) icon.classList.add('text-[#EF3C54]');
-    resultsDiv.classList.remove('hidden');
-    resultsDiv.innerHTML = '<p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Resultados</p>';
-
-    if (!res.length) {
-        resultsDiv.innerHTML += `<p class="text-xs text-gray-600 text-center py-4">Nenhum resultado.</p>`;
-        return;
-    }
-
-    res.forEach(m => {
-        resultsDiv.innerHTML += `
-            <div onclick="selecionarMusica('${m.id}')"
-                class="bg-white/5 p-3 rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-white/10 transition border border-white/5 hover:border-[#EF3C54]/20">
-                <img src="${m.capa || 'assets/default.png'}" class="w-8 h-8 rounded-lg object-cover flex-shrink-0" onerror="this.src='assets/default.png'">
-                <div class="flex-1 overflow-hidden">
-                    <p class="text-xs font-bold text-white truncate">${m.titulo}</p>
-                    <p class="text-[9px] text-gray-500 uppercase truncate">${m.artista}</p>
+            <!-- Stats Rápidas -->
+            <div class="grid grid-cols-3 gap-2 mb-8">
+                <div class="glass rounded-xl p-3 text-center border border-white/5">
+                    <p id="stat-musicas" class="text-lg font-black text-[#EF3C54]">—</p>
+                    <p class="text-[7px] text-gray-600 uppercase font-bold">Músicas</p>
                 </div>
-            </div>`;
-    });
-}
+                <div class="glass rounded-xl p-3 text-center border border-white/5">
+                    <p id="stat-users" class="text-lg font-black text-[#2E5EBE]">—</p>
+                    <p class="text-[7px] text-gray-600 uppercase font-bold">Users</p>
+                </div>
+                <div class="glass rounded-xl p-3 text-center border border-white/5 relative">
+                    <p id="stat-total" class="text-lg font-black text-orange-400">—</p>
+                    <p class="text-[7px] text-gray-600 uppercase font-bold">Msgs</p>
+                    <span id="notif-count" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-[#EF3C54] rounded-full text-[7px] font-black flex items-center justify-center"></span>
+                </div>
+            </div>
 
-function selecionarMusica(id) {
-    const idx = playlistOriginal.findIndex(m => m.id === id);
-    if (idx === -1) return;
-    playlist = [...playlistOriginal];
-    renderizarMusica(idx);
-    audio.play();
-    if (playBtn) { playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>'; playBtn.classList.add('animate-pulse-pink'); }
-    if (typeof mostrarSlideshowOuCapa === 'function') mostrarSlideshowOuCapa(true);
-    toggleSidebar();
-}
+            <nav class="space-y-2 flex-1">
+                <button onclick="abrirAba('musicas')" id="btn-musicas" class="aba-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition text-gray-400 font-bold text-sm text-left">
+                    <i class="fa-solid fa-music text-[#EF3C54]"></i> Músicas
+                </button>
+                <button onclick="abrirAba('usuarios')" id="btn-usuarios" class="aba-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition text-gray-400 font-bold text-sm text-left">
+                    <i class="fa-solid fa-users text-[#2E5EBE]"></i> Utilizadores
+                </button>
+                <button onclick="abrirAba('parcerias')" id="btn-parcerias" class="aba-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition text-gray-400 font-bold text-sm text-left">
+                    <i class="fa-solid fa-handshake text-orange-400"></i> Parcerias
+                </button>
+            </nav>
 
-function filtrarCategoria(cat, btn) {
-    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('sidebar-link-active'));
-    if (btn) btn.classList.add('sidebar-link-active');
-    playlist = cat === 'all' ? [...playlistOriginal] : playlistOriginal.filter(m => m.tipo === cat);
-    if (playlist.length) renderizarMusica(0);
-    if (typeof renderizarListaFaixas === 'function') renderizarListaFaixas();
-    toggleSidebar();
-}
+            <div class="pt-6 border-t border-white/5 space-y-3">
+                <a href="index.html" class="flex items-center gap-4 p-4 text-gray-600 hover:text-white transition text-xs font-bold uppercase">
+                    <i class="fa-solid fa-house"></i> Voltar à Home
+                </a>
+                <button onclick="logout()" class="w-full bg-red-500/10 text-red-500 p-4 rounded-2xl font-bold text-xs hover:bg-red-500/20 transition">
+                    <i class="fa-solid fa-power-off mr-2"></i>SAIR
+                </button>
+            </div>
+        </aside>
 
-// 6. UTILITÁRIOS
-function toggleSidebar() {
-    const sb  = document.getElementById('sidebar');
-    const ov  = document.getElementById('sidebar-overlay');
-    if (sb) sb.classList.toggle('-translate-x-full');
-    if (ov) ov.classList.toggle('hidden');
-}
+        <!-- Conteúdo Principal -->
+        <main class="flex-1 overflow-y-auto p-10 bg-[#03081a]">
 
-function fmt(s) {
-    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-    return `${m}:${sec < 10 ? '0' : ''}${sec}`;
-}
+            <!-- Aba: Músicas -->
+            <section id="aba-musicas" class="aba-content hidden">
+                <h2 class="text-2xl font-black italic mb-8">Gestão de Músicas</h2>
 
-function logout() {
-    auth.signOut().then(() => window.location.reload());
-}
+                <!-- Formulário Publicar -->
+                <div class="glass p-8 rounded-[2.5rem] border border-white/10 mb-10">
+                    <h3 class="text-[10px] font-black uppercase text-gray-500 mb-6 tracking-widest">Publicar Nova Música</h3>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input type="text" id="adm-titulo" placeholder="Título da música" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
+                        <input type="text" id="adm-artista" placeholder="Nome do Artista" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm">
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-4 mb-4">
+                        <input type="url" id="adm-url" placeholder="Link direto do MP3 (https://...)" class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-xs">
+                        <select id="adm-tipo" onchange="atualizarSubcategoriasSelect()" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition">
+                            <option value="" disabled>Categoria...</option>
+                        </select>
+                        <select id="adm-subcategoria" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#EF3C54] transition">
+                            <option value="">Sem subcategoria</option>
+                        </select>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Data de Produção</label>
+                            <input type="date" id="adm-data-producao" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm text-gray-300">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Data de Publicação</label>
+                            <input type="date" id="adm-data-publicacao" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm text-gray-300">
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-[10px] text-gray-500 uppercase mb-2 font-bold">Capa da Música (Opcional)</label>
+                        <div class="glass border border-dashed border-white/10 rounded-2xl p-4 hover:border-[#EF3C54]/30 transition flex items-center gap-4 cursor-pointer relative">
+                            <i class="fa-solid fa-image text-gray-600 text-xl"></i>
+                            <span id="capa-filename" class="text-xs text-gray-500">Escolher ficheiro de imagem...</span>
+                            <input type="file" id="adm-ficheiro-capa" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
+                                onchange="document.getElementById('capa-filename').innerText = this.files[0]?.name || 'Escolher ficheiro...'">
+                        </div>
+                    </div>
+                    <button onclick="publicarMusicaAdmin()" id="btn-publicar" class="w-full bg-[#EF3C54] py-4 rounded-2xl font-black hover:scale-[1.02] active:scale-95 transition shadow-lg shadow-pink-500/20 text-sm tracking-widest">
+                        <i class="fa-solid fa-rocket mr-2"></i>PUBLICAR NO PLAYER
+                    </button>
+                </div>
 
-// 7. UPLOAD IMGBB
-async function uploadParaImgBB(file) {
-    const fd = new FormData();
-    fd.append('image', file);
-    try {
-        const r    = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: 'POST', body: fd });
-        const data = await r.json();
-        return data.success ? data.data.url : null;
-    } catch { return null; }
-}
+                <!-- Filtro + Lista de Músicas -->
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-widest">Músicas Publicadas</h3>
+                    <div class="flex items-center gap-2">
+                        <select id="filtro-categoria" onchange="atualizarFiltroSubcategorias(); carregarMusicasAdmin()" class="bg-[#020617] border border-white/10 px-3 py-2 rounded-xl text-xs text-gray-400 outline-none focus:border-[#EF3C54] transition">
+                            <option value="">Todas as categorias</option>
+                        </select>
+                        <select id="filtro-subcategoria" onchange="carregarMusicasAdmin()" class="bg-[#020617] border border-white/10 px-3 py-2 rounded-xl text-xs text-gray-400 outline-none focus:border-[#EF3C54] transition">
+                            <option value="">Todas as subcategorias</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="adm-lista-musicas" class="grid md:grid-cols-2 gap-4 mb-12"></div>
 
-// 8. REGISTAR PLAY — actualiza estatísticas do utilizador + contador global da música
-async function registarPlay(musicaId) {
-    if (!musicaId) return;
-    try {
-        // Contador global de visualizações na própria música
-        db.collection("playlist").doc(musicaId).update({
-            visualizacoes: firebase.firestore.FieldValue.increment(1)
-        }).catch(() => {}); // silencioso se falhar permissões
+                <!-- Modal: Mover/Editar música -->
+                <!-- Modal Mover — fora do fluxo, controlado por JS -->
+                <div id="modal-mover" class="fixed inset-0 z-[700] bg-black/90 backdrop-blur-md items-center justify-center p-6" style="display:none">
+                    <div class="glass w-full max-w-md p-8 rounded-[3rem] border border-white/10 relative shadow-2xl">
+                        <button onclick="fecharModalMover()" class="absolute top-5 right-5 text-gray-500 hover:text-white transition">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
 
-        // Estatísticas por utilizador (só se estiver autenticado)
-        const user = auth.currentUser;
-        if (!user) return;
-        await db.collection("users").doc(user.uid).collection("estatisticas").doc(musicaId).set({
-            plays:       firebase.firestore.FieldValue.increment(1),
-            ultimoOuvido: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-    } catch { /* silencioso */ }
-}
+                        <!-- Info da música -->
+                        <div class="flex items-center gap-4 mb-6">
+                            <img id="modal-musica-capa" src="assets/default.png" class="w-14 h-14 rounded-2xl object-cover bg-white/5 flex-shrink-0" onerror="this.src='assets/default.png'">
+                            <div class="overflow-hidden">
+                                <h2 class="text-base font-black text-white truncate" id="modal-musica-nome">—</h2>
+                                <p id="modal-musica-artista" class="text-[9px] text-gray-500 uppercase font-bold truncate">—</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-[8px] text-gray-600 font-bold uppercase">Actual:</span>
+                                    <span id="modal-musica-actual" class="text-[8px] text-[#EF3C54] font-black uppercase">—</span>
+                                </div>
+                            </div>
+                        </div>
 
-// 9. MENU DIREITO
-const sideMenu   = document.getElementById('side-menu');
-const openMenuBtn = document.getElementById('open-menu');
-const closeMenuEl = document.getElementById('close-menu');
-if (openMenuBtn) openMenuBtn.onclick = () => sideMenu.classList.remove('hidden');
-if (closeMenuEl) closeMenuEl.onclick = () => sideMenu.classList.add('hidden');
+                        <input type="hidden" id="modal-musica-id">
 
-// 10. NOTIFICAÇÕES ADMIN (só na página admin)
-function monitorarNotificacoes() {
-    const badge = document.getElementById('notif-count');
-    if (!badge) return;
-    db.collection("contactos").where("lido", "==", false).onSnapshot(snap => {
-        const n = snap.size;
-        if (n > 0) {
-            badge.innerText = n > 99 ? '+99' : n;
-            badge.classList.remove('hidden');
-            document.title = `(${n}) Painel General | Sons Bwé Fixe`;
-        } else {
-            badge.classList.add('hidden');
-            document.title = 'Painel General | Sons Bwé Fixe';
+                        <div class="space-y-4">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Nova Categoria</label>
+                                <select id="modal-tipo" onchange="atualizarModalSubcategorias()"
+                                    class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Subcategoria <span class="text-gray-700">(opcional)</span></label>
+                                <select id="modal-subcategoria"
+                                    class="w-full bg-[#020617] border border-white/10 p-4 rounded-2xl text-sm text-gray-300 outline-none focus:border-[#EF3C54] transition">
+                                    <option value="">Sem subcategoria</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="modal-mover-feedback" class="hidden mt-4 p-3 rounded-xl text-xs font-black uppercase text-center"></div>
+
+                        <button onclick="salvarMoverMusica()" id="btn-salvar-mover"
+                            class="w-full mt-5 bg-[#2E5EBE] py-4 rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition shadow-lg shadow-blue-500/20">
+                            <i class="fa-solid fa-arrows-up-down-left-right mr-2"></i>MOVER FAIXA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GESTÃO DE CATEGORIAS -->
+                <div class="border-t border-white/5 pt-10">
+
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-widest">Gestão de Categorias</h3>
+                            <p class="text-[9px] text-gray-700 mt-1">Cada categoria gera uma página própria no site</p>
+                        </div>
+                        <span id="cat-total-badge" class="text-[9px] font-black text-gray-600 bg-white/5 px-3 py-1 rounded-full">0 categorias</span>
+                    </div>
+
+                    <!-- Toast de feedback -->
+                    <div id="cat-toast" class="hidden mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center transition-all"></div>
+
+                    <!-- Banner primeira vez -->
+                    <div id="seed-banner" class="hidden glass p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 mb-6 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-black text-yellow-400">Sem categorias ainda</p>
+                            <p class="text-[9px] text-gray-500 mt-1">Cria as categorias padrão (Album, EP, Single, Mixtape) com um clique</p>
+                        </div>
+                        <button onclick="seedCategorias()" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-4 py-2 rounded-xl text-xs font-black hover:bg-yellow-500/30 transition flex-shrink-0 ml-4">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>INICIALIZAR
+                        </button>
+                    </div>
+
+                    <!-- Formulário: criar nova categoria -->
+                    <div class="glass p-6 rounded-[2rem] border border-white/10 mb-6">
+                        <h4 class="text-[10px] font-black uppercase text-gray-500 mb-5 tracking-widest">
+                            <i class="fa-solid fa-plus mr-2 text-[#EF3C54]"></i>Nova Categoria
+                        </h4>
+                        <div class="grid md:grid-cols-3 gap-4 mb-4">
+                            <input type="text" id="nova-cat-nome" placeholder="Nome (ex: Ao Vivo)"
+                                class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#EF3C54] transition text-sm"
+                                onkeydown="if(event.key==='Enter') criarCategoria()">
+                            <select id="nova-cat-icone" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-300 focus:border-[#EF3C54] transition text-sm">
+                                <option value="fa-bolt">⚡ Bolt</option>
+                                <option value="fa-compact-disc">💿 Compact Disc</option>
+                                <option value="fa-layer-group">📚 Layer Group</option>
+                                <option value="fa-cassette-tape">📼 Cassette</option>
+                                <option value="fa-music">🎵 Music Note</option>
+                                <option value="fa-microphone">🎤 Microphone</option>
+                                <option value="fa-star">⭐ Star</option>
+                                <option value="fa-fire">🔥 Fire</option>
+                                <option value="fa-headphones">🎧 Headphones</option>
+                                <option value="fa-guitar">🎸 Guitar</option>
+                                <option value="fa-drum">🥁 Drum</option>
+                                <option value="fa-record-vinyl">🎵 Vinyl</option>
+                                <option value="fa-radio">📻 Radio</option>
+                            </select>
+                            <button onclick="criarCategoria()" id="btn-criar-cat"
+                                class="bg-[#EF3C54] py-4 rounded-2xl font-black text-xs hover:scale-[1.02] active:scale-95 transition shadow-lg shadow-pink-500/10">
+                                <i class="fa-solid fa-plus mr-2"></i>CRIAR CATEGORIA
+                            </button>
+                        </div>
+                        <!-- Preview do ícone -->
+                        <div class="flex items-center gap-3 mt-2 pl-1">
+                            <span class="text-[9px] text-gray-600 uppercase font-bold">Preview:</span>
+                            <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl">
+                                <i id="preview-icone" class="fa-solid fa-bolt text-[#EF3C54] text-sm"></i>
+                                <span id="preview-nome" class="text-xs font-bold text-gray-400">Bolt</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de categorias -->
+                    <div id="adm-lista-categorias" class="space-y-3 mb-12"></div>
+
+                    <!-- GESTÃO DE SUBCATEGORIAS -->
+                    <div class="border-t border-white/5 pt-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-[10px] font-black uppercase text-gray-500 tracking-widest">Subcategorias</h3>
+                                <p class="text-[9px] text-gray-700 mt-1">Agrupam músicas dentro de uma categoria (ex: Album → "Lado A", "Lado B")</p>
+                            </div>
+                        </div>
+
+                        <div id="subcat-toast" class="hidden mb-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center transition-all"></div>
+
+                        <!-- Criar subcategoria -->
+                        <div class="glass p-6 rounded-[2rem] border border-white/10 mb-6">
+                            <h4 class="text-[10px] font-black uppercase text-gray-500 mb-5 tracking-widest">
+                                <i class="fa-solid fa-folder-plus mr-2 text-[#2E5EBE]"></i>Nova Subcategoria
+                            </h4>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <select id="nova-subcat-pai" class="bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-[#2E5EBE] transition text-sm">
+                                    <option value="">Escolher categoria-mãe...</option>
+                                </select>
+                                <input type="text" id="nova-subcat-nome" placeholder="Nome (ex: Lado A)"
+                                    class="bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-[#2E5EBE] transition text-sm"
+                                    onkeydown="if(event.key==='Enter') criarSubcategoria()">
+                                <button onclick="criarSubcategoria()" id="btn-criar-subcat"
+                                    class="bg-[#2E5EBE] py-4 rounded-2xl font-black text-xs hover:scale-[1.02] active:scale-95 transition shadow-lg">
+                                    <i class="fa-solid fa-plus mr-2"></i>CRIAR SUB
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de subcategorias agrupadas por categoria -->
+                        <div id="adm-lista-subcategorias" class="space-y-4"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Aba: Utilizadores -->
+            <section id="aba-usuarios" class="aba-content hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-black italic">Gestão de Utilizadores</h2>
+                    <button onclick="document.getElementById('modal-user').classList.remove('hidden')" class="bg-[#2E5EBE] px-6 py-3 rounded-xl font-bold text-xs hover:bg-blue-500 transition">
+                        <i class="fa-solid fa-plus mr-2"></i>NOVO UTILIZADOR
+                    </button>
+                </div>
+                <div class="glass rounded-[2rem] border border-white/5 overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-white/5 text-gray-500 uppercase text-[10px] font-black">
+                            <tr>
+                                <th class="p-5">Utilizador</th>
+                                <th class="p-5">Status</th>
+                                <th class="p-5">Cargo</th>
+                                <th class="p-5 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-usuarios-admin"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Aba: Parcerias -->
+            <section id="aba-parcerias" class="aba-content hidden">
+                <h2 class="text-2xl font-black italic mb-8">Propostas de Parceria</h2>
+                <div id="adm-lista-parcerias" class="grid md:grid-cols-2 gap-4"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal Criar Utilizador -->
+    <div id="modal-user" class="fixed inset-0 z-[600] bg-black/90 backdrop-blur-md flex items-center justify-center hidden p-6">
+        <div class="glass w-full max-w-md p-10 rounded-[3rem] border border-white/10 relative">
+            <button onclick="document.getElementById('modal-user').classList.add('hidden')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h2 class="text-xl font-black mb-6">Novo Utilizador</h2>
+            <div class="space-y-4">
+                <input type="text" id="new-user-nome" placeholder="Nome" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                <input type="email" id="new-user-email" placeholder="Email" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                <input type="password" id="new-user-pass" placeholder="Senha (mínimo 6 caracteres)" class="w-full bg-white/5 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                <select id="new-user-role" class="w-full bg-[#020617] border border-white/5 p-4 rounded-2xl outline-none text-gray-400 focus:border-blue-500 transition">
+                    <option value="user">Ouvinte (User)</option>
+                    <option value="admin">Administrador (General)</option>
+                </select>
+                <button onclick="confirmarCriarUsuario()" id="btn-conf-user" class="w-full bg-[#2E5EBE] py-4 rounded-2xl font-black hover:bg-blue-500 transition">CRIAR CONTA</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="script.js"></script>
+    <script src="admin.js"></script>
+
+    <script>
+        // --- CONTROLO DE ABAS ---
+        function abrirAba(nome) {
+            document.querySelectorAll('.aba-content').forEach(a => a.classList.add('hidden'));
+            document.querySelectorAll('.aba-btn').forEach(b => {
+                b.classList.remove('bg-white/5', 'text-white', 'sidebar-link-active');
+            });
+            document.getElementById('aba-' + nome).classList.remove('hidden');
+            document.getElementById('btn-' + nome).classList.add('bg-white/5', 'text-white');
+            if (nome === 'usuarios') carregarUsuariosAdmin();
+            if (nome === 'musicas') {
+                carregarMusicasAdmin();
+                carregarCategoriasAdmin();
+                carregarSubcategoriasAdmin();
+                carregarSelectPaiSubcat();
+                carregarFiltrosCategorias();
+            }
+            if (nome === 'parcerias') carregarParcerias();
         }
-    });
-}
-monitorarNotificacoes();
+
+        // --- GESTÃO DE UTILIZADORES ---
+        function carregarUsuariosAdmin() {
+            db.collection("users").onSnapshot(snap => {
+                const lista = document.getElementById('lista-usuarios-admin');
+                lista.innerHTML = "";
+                if (snap.empty) {
+                    lista.innerHTML = "<tr><td colspan='4' class='p-6 text-center text-gray-600 italic'>Nenhum utilizador encontrado.</td></tr>";
+                    return;
+                }
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    const ativo = u.ativo !== false;
+                    lista.innerHTML += `
+                        <tr class="border-t border-white/5 hover:bg-white/5 transition">
+                            <td class="p-5">
+                                <div class="font-bold text-sm">${u.nome || 'Sem nome'}</div>
+                                <div class="text-[9px] text-gray-500">${u.email || ''}</div>
+                            </td>
+                            <td class="p-5">
+                                <span class="text-[10px] font-black uppercase px-3 py-1 rounded-full ${ativo ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}">
+                                    ${ativo ? 'Ativo' : 'Banido'}
+                                </span>
+                            </td>
+                            <td class="p-5 text-gray-400 text-xs font-bold uppercase">${u.role || 'user'}</td>
+                            <td class="p-5 text-right space-x-2">
+                                <button onclick="toggleUserStatus('${doc.id}', ${ativo})" class="w-8 h-8 rounded-lg ${ativo ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'} transition inline-flex items-center justify-center" title="${ativo ? 'Banir' : 'Ativar'}">
+                                    <i class="fa-solid fa-power-off text-xs"></i>
+                                </button>
+                                <button onclick="excluirUsuario('${doc.id}')" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition inline-flex items-center justify-center" title="Eliminar">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+            });
+        }
+
+        async function confirmarCriarUsuario() {
+            const email = document.getElementById('new-user-email').value.trim();
+            const pass = document.getElementById('new-user-pass').value.trim();
+            const nome = document.getElementById('new-user-nome').value.trim();
+            const role = document.getElementById('new-user-role').value;
+            const btn = document.getElementById('btn-conf-user');
+
+            if (!nome || !email || !pass) return alert("Preenche todos os campos!");
+
+            btn.innerText = "A CRIAR...";
+            btn.disabled = true;
+
+            try {
+                // Criação via Firebase Auth (nota: cria sessão secundária)
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.collection("users").doc(cred.user.uid).set({
+                    nome, email, role, ativo: true,
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Utilizador criado com sucesso!");
+                document.getElementById('modal-user').classList.add('hidden');
+                document.getElementById('new-user-nome').value = '';
+                document.getElementById('new-user-email').value = '';
+                document.getElementById('new-user-pass').value = '';
+            } catch (e) {
+                alert("Erro: " + e.message);
+            } finally {
+                btn.innerText = "CRIAR CONTA";
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleUserStatus(id, status) {
+            await db.collection("users").doc(id).update({ ativo: !status });
+        }
+
+        async function excluirUsuario(id) {
+            if (confirm("Eliminar conta definitivamente? Esta ação é irreversível.")) {
+                await db.collection("users").doc(id).delete();
+            }
+        }
+    </script>
+</body>
+</html>
