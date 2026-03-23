@@ -25,36 +25,95 @@ const COR_ICONE_INDEX = {
 };
 
 // =============================================
-// 1. CATEGORIAS NA SIDEBAR (tempo real)
+// 1. FILTROS NA SIDEBAR — funcionais inline
 // =============================================
+let _filtroActivo = 'all';
+
 const CATS_FALLBACK = [
-    { nome:'Album',  icone:'fa-compact-disc', cor:'text-orange-500' },
-    { nome:'EP',     icone:'fa-layer-group',  cor:'text-yellow-500' },
-    { nome:'Single', icone:'fa-bolt',         cor:'text-[#EF3C54]'  },
-    { nome:'Mixtape',icone:'fa-cassette-tape',cor:'text-purple-500' },
+    { nome:'Album',   icone:'fa-compact-disc',  cor:'text-orange-500' },
+    { nome:'EP',      icone:'fa-layer-group',   cor:'text-yellow-500' },
+    { nome:'Single',  icone:'fa-bolt',          cor:'text-[#EF3C54]'  },
+    { nome:'Mixtape', icone:'fa-cassette-tape', cor:'text-purple-500' },
 ];
 
-function renderizarNavCategorias(lista) {
-    const nav = document.getElementById('nav-categorias');
-    if (!nav) return;
-    const fixos = Array.from(nav.children).filter(el => el.tagName==='P' || el.tagName==='BUTTON');
-    nav.innerHTML = '';
-    fixos.forEach(el => nav.appendChild(el));
-    lista.forEach(cat => {
-        const cor = COR_ICONE_INDEX[cat.icone||'fa-music'] || cat.cor || 'text-blue-400';
-        const a = document.createElement('a');
-        a.href = `categoria.html?tipo=${encodeURIComponent(cat.nome)}`;
-        a.className = 'category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left';
-        a.innerHTML = `<i class="fa-solid ${cat.icone||'fa-music'} ${cor}"></i>
-            <span class="text-sm font-bold group-hover:text-white text-gray-400">${cat.nome}s</span>`;
-        nav.appendChild(a);
+// Aplica filtro e actualiza lista + player
+function aplicarFiltro(tipo, btn) {
+    _filtroActivo = tipo;
+
+    // Destacar botão activo
+    document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.remove('sidebar-link-active');
+        b.querySelector('span:first-of-type')?.classList.replace('text-white', 'text-gray-400');
     });
+    if (btn) {
+        btn.classList.add('sidebar-link-active');
+        btn.querySelector('span:first-of-type')?.classList.replace('text-gray-400', 'text-white');
+    }
+
+    // Filtrar playlist
+    playlist = tipo === 'all'
+        ? [...playlistOriginal]
+        : playlistOriginal.filter(m => m.tipo === tipo);
+
+    // Actualizar lista e player
+    if (typeof renderizarListaFaixas === 'function') renderizarListaFaixas();
+    if (playlist.length > 0) renderizarMusica(0);
+
+    // Fechar sidebar em mobile
+    if (window.innerWidth < 768) toggleSidebar();
 }
 
-renderizarNavCategorias(CATS_FALLBACK);
+// Construir botões de filtro a partir das categorias do Firebase
+function renderizarFiltrosCategorias(lista) {
+    const container = document.getElementById('filtros-categorias');
+    if (!container) return;
+    container.innerHTML = '';
+
+    lista.forEach(cat => {
+        const cor = COR_ICONE_INDEX[cat.icone||'fa-music'] || cat.cor || 'text-blue-400';
+        const count = playlistOriginal.filter(m => m.tipo === cat.nome).length;
+        const isActive = _filtroActivo === cat.nome;
+
+        const btn = document.createElement('button');
+        btn.className = `filter-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left${isActive ? ' sidebar-link-active' : ''}`;
+        btn.setAttribute('onclick', `aplicarFiltro('${cat.nome}', this)`);
+        btn.innerHTML = `
+            <i class="fa-solid ${cat.icone||'fa-music'} ${cor}"></i>
+            <span class="text-sm font-bold group-hover:text-white ${isActive ? 'text-white' : 'text-gray-400'}">${cat.nome}s</span>
+            ${count > 0 ? `<span class="ml-auto text-[9px] text-gray-600 font-black">${count}</span>` : ''}`;
+        container.appendChild(btn);
+    });
+
+    // Actualizar badge do "Tudo"
+    const badgeAll = document.getElementById('badge-all');
+    if (badgeAll) badgeAll.innerText = playlistOriginal.length || '';
+}
+
+// Carregar categorias do Firebase e construir filtros
 db.collection("categorias").orderBy("ordem").onSnapshot(snap => {
-    renderizarNavCategorias(snap.empty ? CATS_FALLBACK : snap.docs.map(d => d.data()));
+    const lista = snap.empty ? CATS_FALLBACK : snap.docs.map(d => d.data());
+    renderizarFiltrosCategorias(lista);
 });
+
+// Re-renderizar filtros quando playlist carrega (para mostrar contagens correctas)
+const _origOnPlaylistLoad = window._onPlaylistLoad;
+window._onPlaylistLoad = function() {
+    if (_origOnPlaylistLoad) _origOnPlaylistLoad();
+    // Actualizar contagens nos botões
+    document.querySelectorAll('.filter-btn[onclick*="aplicarFiltro"]').forEach(btn => {
+        const oc = btn.getAttribute('onclick') || '';
+        const match = oc.match(/aplicarFiltro..([^']+)/);
+        if (!match || match[1] === 'all') return;
+        const tipo  = match[1];
+        const count = playlistOriginal.filter(m => m.tipo === tipo).length;
+        const badge = btn.querySelector('span:last-child');
+        if (badge && badge !== btn.querySelector('span:first-of-type')) {
+            badge.innerText = count > 0 ? count : '';
+        }
+    });
+    const badgeAll = document.getElementById('badge-all');
+    if (badgeAll) badgeAll.innerText = playlistOriginal.length || '';
+};
 
 // =============================================
 // 2. SLIDESHOW
