@@ -74,6 +74,9 @@ if (audio) {
             playlist         = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             playlistOriginal = [...playlist];
 
+            // Notificar index-page.js que a playlist carregou (para actualizar contagens)
+            if (typeof window._onPlaylistLoad === 'function') window._onPlaylistLoad();
+
             if (typeof renderizarListaFaixas === 'function') renderizarListaFaixas();
             if (typeof mostrarSlideshowOuCapa === 'function' && (!audio.src || audio.paused)) {
                 mostrarSlideshowOuCapa(false);
