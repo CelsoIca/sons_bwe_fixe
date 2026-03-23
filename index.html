@@ -78,16 +78,26 @@
             </div>
 
             <nav class="space-y-1 flex-1 overflow-y-auto" id="nav-categorias">
-                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Categorias</p>
-                <a href="categoria.html" class="category-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
-                    <i class="fa-solid fa-layer-group text-[#2E5EBE]"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-white">Todas</span>
-                </a>
-                <a href="categoria.html" class="category-link w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
-                    <i class="fa-solid fa-layer-group text-gray-500"></i>
-                    <span class="text-sm font-bold group-hover:text-white text-gray-400">Explorar</span>
-                </a>
-                <!-- Categorias carregadas dinamicamente do Firebase pelo index-page.js -->
+                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-3 ml-2">Filtrar</p>
+
+                <!-- Tudo — sem filtro -->
+                <button onclick="aplicarFiltro('all', this)"
+                    class="filter-btn w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left sidebar-link-active">
+                    <i class="fa-solid fa-music text-[#2E5EBE]"></i>
+                    <span class="text-sm font-bold group-hover:text-white text-white">Tudo</span>
+                    <span id="badge-all" class="ml-auto text-[9px] text-gray-600 font-black"></span>
+                </button>
+
+                <!-- Categorias preenchidas pelo Firebase -->
+                <div id="filtros-categorias"></div>
+
+                <div class="border-t border-white/5 mt-3 pt-3">
+                    <a href="categoria.html" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition group text-left">
+                        <i class="fa-solid fa-layer-group text-gray-500"></i>
+                        <span class="text-sm font-bold group-hover:text-white text-gray-400">Explorar Tudo</span>
+                        <i class="fa-solid fa-arrow-right text-gray-700 text-xs ml-auto group-hover:text-gray-400 transition"></i>
+                    </a>
+                </div>
             </nav>
 
             <div class="mt-auto pt-6 border-t border-white/5">
